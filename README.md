@@ -2,9 +2,9 @@
 
 **TAKARKUY** (Tata Kelola Anggaran dan Resep, Kuy!) adalah aplikasi untuk membantu pengguna merencanakan menu makanan yang sehat, hemat, dan minim limbah makanan. Berbeda dari aplikasi resep konvensional, TAKARKUY memulai perencanaan dari anggaran dan stok bahan yang sudah tersedia, kemudian menyusun rekomendasi menu untuk hari-hari selanjutnya.
 
-Repositori ini berisi versi mobile (Flutter) dari TAKARKUY. Aplikasi tidak menyimpan data statis: semua data (akun, rencana, stok, resep) diambil dari dan dikirim ke versi web yang berjalan di PWS ([repositori web](https://github.com/PBPUY-11-C/TAKARKUY)).
 
-**Aplikasi web:** [alfredo-nathaniel-takarkuy.pws.cs.ui.ac.id](https://alfredo-nathaniel-takarkuy.pws.cs.ui.ac.id) · **Desain:** [Figma](https://www.figma.com/design/EwuNvVKhBjAzQH1OYC6Cs7/Untitled?node-id=0-1&t=b5W2dmy5bpgVoPdF-1) · **Data & API:** [DATA_API.md](https://github.com/PBPUY-11-C/TAKARKUY/blob/main/DATA_API.md) · **APK:** menyusul
+**Aplikasi web:** [alfredo-nathaniel-takarkuy.pws.cs.ui.ac.id](https://alfredo-nathaniel-takarkuy.pws.cs.ui.ac.id) 
+**Desain:** [Figma](https://www.figma.com/design/EwuNvVKhBjAzQH1OYC6Cs7/Untitled?node-id=0-1&t=b5W2dmy5bpgVoPdF-1)
 
 ## Anggota Kelompok
 
@@ -100,6 +100,24 @@ Setiap anggota memegang satu modul dari tampilan Flutter sampai endpoint API di 
 | Guest | Membuka landing page dan kalkulator budget, serta daftar atau masuk. |
 | Registered User | Mengelola rencana menu, daftar belanja, Virtual Pantry, profil dan preferensi, resep favorit, dan Resep Saya; melihat resep dan riwayat masak, mencatat **Sudah Masak**, serta membuka Dashboard dan market locator. |
 | Administrator | Tidak memakai aplikasi mobile. Master bahan, harga referensi, dan database resep tetap dikelola lewat Django admin di versi web. |
+
+## Alur Integrasi Aplikasi Mobile dan Web
+
+Aplikasi mobile tidak punya database sendiri. Semua data disimpan di aplikasi web Django yang berjalan di PWS, sehingga akun, rencana, stok, dan resep yang sama terlihat di web maupun di HP.
+
+```text
+Aplikasi Flutter  ──(HTTP request)──▶  Django REST Framework (web di PWS)  ──▶  Database
+       ▲                                          │
+       └──────────────(respons JSON)──────────────┘
+```
+
+1. Pengguna masuk di aplikasi mobile memakai akun yang sama dengan versi web. Setelah berhasil, setiap permintaan berikutnya membawa identitas login pengguna.
+2. Saat sebuah halaman dibuka atau pengguna menyimpan perubahan, aplikasi mengirim request HTTP ke endpoint API di web.
+3. Django REST Framework memeriksa login dan kepemilikan data, membaca atau mengubah database, lalu mengirim balasan dalam format JSON.
+4. Aplikasi mengubah JSON tersebut menjadi objek Dart (model) dan menampilkannya di layar.
+5. Perubahan dari mobile langsung tersimpan di database yang sama, sehingga ikut terlihat di versi web, begitu juga sebaliknya.
+
+Daftar endpoint API per modul akan ditambahkan di bagian ini seiring pengerjaan.
 
 ## Menjalankan Secara Lokal
 
