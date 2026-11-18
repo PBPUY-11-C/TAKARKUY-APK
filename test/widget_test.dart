@@ -1,9 +1,3 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,20 +5,44 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:takarkuy_apk/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('TAKARKUY dashboard loads successfully',
+      (WidgetTester tester) async {
     await tester.pumpWidget(const MyApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Memastikan aplikasi berhasil dijalankan.
+    expect(find.byType(MaterialApp), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // Memastikan konten dashboard muncul.
+    expect(find.text('Pintasan Modul'), findsOneWidget);
+    expect(find.text('Hai, selamat datang 👋'), findsOneWidget);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Memastikan navigasi utama tersedia.
+    final navigationBar = find.byType(BottomNavigationBar);
+
+    expect(navigationBar, findsOneWidget);
+
+    expect(
+      find.descendant(
+        of: navigationBar,
+        matching: find.text('Dashboard'),
+      ),
+      findsOneWidget,
+    );
+
+    expect(
+      find.descendant(
+        of: navigationBar,
+        matching: find.text('Resep Saya'),
+      ),
+      findsOneWidget,
+    );
+
+    expect(
+      find.descendant(
+        of: navigationBar,
+        matching: find.text('Market'),
+      ),
+      findsOneWidget,
+    );
   });
 }

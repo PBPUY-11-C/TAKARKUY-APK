@@ -374,11 +374,15 @@ class _BrandHeader extends StatelessWidget {
   }
 }
 
+
 class _GreetingHeader extends StatelessWidget {
   final bool isWide;
   final VoidCallback onOpenMarket;
 
-  const _GreetingHeader({required this.isWide, required this.onOpenMarket});
+  const _GreetingHeader({
+    required this.isWide,
+    required this.onOpenMarket,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -419,26 +423,47 @@ class _GreetingHeader extends StatelessWidget {
         foregroundColor: darkGreen,
         backgroundColor: Colors.white,
         side: const BorderSide(color: borderColor),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
-        textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 12,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(9),
+        ),
+        textStyle: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
 
-    if (isWide) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [greeting, marketButton],
-      );
-    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (isWide && constraints.maxWidth >= 760) {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(child: greeting),
+              const SizedBox(width: 12),
+              marketButton,
+            ],
+          );
+        }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [greeting, const SizedBox(height: 12), marketButton],
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            greeting,
+            const SizedBox(height: 12),
+            marketButton,
+          ],
+        );
+      },
     );
   }
 }
+
 
 // ===============================
 // REUSABLE WIDGETS
