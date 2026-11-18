@@ -239,7 +239,10 @@ class _RecipeListPageState extends State<RecipeListPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const SizedBox(height: 4),
-                              Row(
+                              // Wrap agar teks porsi turun baris di layar sempit, tidak meluber.
+                              Wrap(
+                                spacing: 8,
+                                crossAxisAlignment: WrapCrossAlignment.center,
                                 children: [
                                   Chip(
                                     label: Text(
@@ -255,7 +258,6 @@ class _RecipeListPageState extends State<RecipeListPage> {
                                     padding: EdgeInsets.zero,
                                     visualDensity: VisualDensity.compact,
                                   ),
-                                  const SizedBox(width: 8),
                                   Text(
                                     '${recipe.baseServings ?? 1} porsi',
                                     style: TextStyle(

@@ -1,13 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:takarkuy_apk/akun/screens/akun_page.dart';
+import 'package:takarkuy_apk/dashboard/screens/dashboard_screen.dart';
+import 'package:takarkuy_apk/pantry/screens/pantry_page.dart';
+import 'package:takarkuy_apk/planner/planner_page.dart';
 import 'package:takarkuy_apk/recipe_book/screens/recipe_list_page.dart';
 
+/// Drawer navigasi bersama: kembali ke halaman awal atau membuka salah satu dari lima modul.
 class LeftDrawer extends StatelessWidget {
   const LeftDrawer({super.key});
 
   static const Color darkGreen = Color(0xFF1B4332);
 
+  /// Menutup drawer lalu membuka halaman modul di atas halaman sekarang.
+  static void _open(BuildContext context, Widget page) {
+    Navigator.pop(context);
+    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+  }
+
   @override
   Widget build(BuildContext context) {
+    final modules = <(IconData, String, Widget)>[
+      (Icons.calendar_month_outlined, 'Smart Meal Planner', const PlannerPage()),
+      (Icons.kitchen_outlined, 'Smart Pantry', const PantryPage()),
+      (Icons.person_outline, 'Akun & Preferensi', const AkunPage()),
+      (Icons.menu_book_outlined, 'Buku Resep & Masak', const RecipeListPage()),
+      (Icons.dashboard_outlined, 'Dashboard & Market', const DashboardScreen()),
+    ];
     return Drawer(
       child: ListView(
         children: [
@@ -43,89 +61,16 @@ class LeftDrawer extends StatelessWidget {
             title: const Text('Halaman Utama'),
             onTap: () {
               Navigator.pop(context);
+              Navigator.popUntil(context, (route) => route.isFirst);
             },
           ),
           const Divider(),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Text(
-              'Modul Alena',
-              style: TextStyle(
-                color: Colors.grey,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
+          for (final (icon, title, page) in modules)
+            ListTile(
+              leading: Icon(icon, color: darkGreen),
+              title: Text(title),
+              onTap: () => _open(context, page),
             ),
-          ),
-          ListTile(
-            leading: const Icon(Icons.menu_book, color: darkGreen),
-            title: const Text(
-              'Buku Resep & Masak',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: darkGreen,
-              ),
-            ),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const RecipeListPage()),
-              );
-            },
-          ),
-          const Divider(),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Text(
-              'Modul Lainnya',
-              style: TextStyle(
-                color: Colors.grey,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
-            ),
-          ),
-          ListTile(
-            leading: const Icon(Icons.calendar_month_outlined),
-            title: const Text('Smart Meal Planner'),
-            onTap: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Modul 1: Smart Meal Planner')),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.kitchen_outlined),
-            title: const Text('Smart Pantry'),
-            onTap: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Modul 2: Smart Pantry')),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.person_outline),
-            title: const Text('User & Preferences'),
-            onTap: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Modul 3: User & Preferences')),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.dashboard_outlined),
-            title: const Text('Dashboard & Market'),
-            onTap: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Modul 5: Dashboard & Market')),
-              );
-            },
-          ),
         ],
       ),
     );
