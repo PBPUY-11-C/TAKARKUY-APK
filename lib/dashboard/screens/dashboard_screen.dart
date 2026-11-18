@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:takarkuy_apk/recipe_book/screens/recipe_list_page.dart';
 
+import 'package:takarkuy_apk/pantry/screens/pantry_page.dart';
+import 'package:takarkuy_apk/planner/planner_page.dart';
+
 const Color primaryGreen = Color(0xFF007452);
 const Color darkGreen = Color(0xFF005B40);
 const Color mutedColor = Color(0xFF64736E);
@@ -152,15 +155,23 @@ class DashboardHome extends StatelessWidget {
                       mainAxisSpacing: 10,
                       childAspectRatio: isWide ? 2.55 : 2.0,
                       children: [
-                        const ShortcutCard(
+                        ShortcutCard(
                           title: 'Meal Planner',
                           subtitle: 'Susun menu dan budget',
                           icon: Icons.calendar_month_outlined,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const PlannerPage()),
+                          ),
                         ),
-                        const ShortcutCard(
+                        ShortcutCard(
                           title: 'Pantry',
                           subtitle: 'Cek stok dapur',
                           icon: Icons.kitchen_outlined,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const PantryPage()),
+                          ),
                         ),
                         ShortcutCard(
                           title: 'Resep',
