@@ -15,7 +15,8 @@ class MyApp extends StatelessWidget {
       title: 'TAKARKUY',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.green,
+          seedColor: const Color(0xFF007452),
+          primary: const Color(0xFF007452),
         ),
         useMaterial3: true,
       ),

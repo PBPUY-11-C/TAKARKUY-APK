@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:takarkuy_apk/recipe_book/screens/recipe_list_page.dart';
 
 const Color primaryGreen = Color(0xFF007452);
 const Color darkGreen = Color(0xFF005B40);
@@ -165,7 +166,14 @@ class DashboardHome extends StatelessWidget {
                           title: 'Resep',
                           subtitle: 'Cari dan catat masak',
                           icon: Icons.menu_book_outlined,
-                          onTap: onOpenRecipes,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const RecipeListPage(),
+                              ),
+                            );
+                          },
                         ),
                         ShortcutCard(
                           title: 'Tambah resep',
@@ -374,15 +382,11 @@ class _BrandHeader extends StatelessWidget {
   }
 }
 
-
 class _GreetingHeader extends StatelessWidget {
   final bool isWide;
   final VoidCallback onOpenMarket;
 
-  const _GreetingHeader({
-    required this.isWide,
-    required this.onOpenMarket,
-  });
+  const _GreetingHeader({required this.isWide, required this.onOpenMarket});
 
   @override
   Widget build(BuildContext context) {
@@ -423,17 +427,9 @@ class _GreetingHeader extends StatelessWidget {
         foregroundColor: darkGreen,
         backgroundColor: Colors.white,
         side: const BorderSide(color: borderColor),
-        padding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 12,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(9),
-        ),
-        textStyle: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+        textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
       ),
     );
 
@@ -453,17 +449,12 @@ class _GreetingHeader extends StatelessWidget {
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            greeting,
-            const SizedBox(height: 12),
-            marketButton,
-          ],
+          children: [greeting, const SizedBox(height: 12), marketButton],
         );
       },
     );
   }
 }
-
 
 // ===============================
 // REUSABLE WIDGETS
