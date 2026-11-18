@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:takarkuy_apk/akun/screens/akun_page.dart';
 import 'package:takarkuy_apk/dashboard/screens/dashboard_screen.dart';
+import 'package:takarkuy_apk/recipe_book/screens/recipe_list_page.dart';
 import 'package:takarkuy_apk/main.dart';
 import 'package:takarkuy_apk/pantry/screens/pantry_page.dart';
 import 'package:takarkuy_apk/planner/planner_page.dart';
@@ -50,11 +52,19 @@ void main() {
     expect(find.byType(DashboardScreen), findsOneWidget);
   });
 
-  testWidgets('modul yang belum punya halaman memberi tahu "segera hadir"', (tester) async {
+  testWidgets('kartu Resep membuka halaman Buku Resep', (tester) async {
     await tester.pumpWidget(const TakarKuyApp());
     await tester.tap(find.text('Resep'));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
-    expect(find.text('Halaman Resep segera hadir.'), findsOneWidget);
+    expect(find.byType(RecipeListPage), findsOneWidget);
+  });
+
+  testWidgets('kartu Akun membuka halaman Akun', (tester) async {
+    await tester.pumpWidget(const TakarKuyApp());
+    await tester.tap(find.text('Akun'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AkunPage), findsOneWidget);
   });
 }
