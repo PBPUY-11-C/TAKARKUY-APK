@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import 'akun/screens/akun_page.dart';
+import 'akun/screens/signup_page.dart';
 import 'dashboard/screens/dashboard_screen.dart';
 
 void main() {
@@ -21,6 +24,10 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       home: const DashboardScreen(),
+      routes: {
+        '/login': (_) => const AkunPage(),
+        '/signup': (_) => const SignupPage(),
+      },
     );
   }
 }

@@ -108,12 +108,10 @@ class LeftDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.person_outline),
-            title: const Text('User & Preferences'),
+            title: const Text('MasukKuy'),
             onTap: () {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Modul 3: User & Preferences')),
-              );
+              Navigator.pushNamed(context, '/login');
             },
           ),
           ListTile(
