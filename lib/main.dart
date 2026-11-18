@@ -1,25 +1,28 @@
 import 'package:flutter/material.dart';
-import 'dashboard/screens/dashboard_screen.dart';
+
+import 'package:takarkuy_apk/screens/menu.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const TakarKuyApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+/// Akar aplikasi: tema mengikuti warna hijau versi web agar kedua versi terasa satu produk.
+class TakarKuyApp extends StatelessWidget {
+  const TakarKuyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       title: 'TAKARKUY',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.green,
+          seedColor: TakarKuyColors.green,
+          primary: TakarKuyColors.green,
         ),
-        useMaterial3: true,
+        scaffoldBackgroundColor: TakarKuyColors.canvas,
       ),
-      home: const DashboardScreen(),
+      home: const MenuPage(),
     );
   }
 }
