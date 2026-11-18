@@ -164,7 +164,7 @@ class _RecipeListPageState extends State<RecipeListPage> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: _mealCategories.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              separatorBuilder: (context, index) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
                 final category = _mealCategories[index];
                 final isSelected = _selectedMeal == category['value'];
