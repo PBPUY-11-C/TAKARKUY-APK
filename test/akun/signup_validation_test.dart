@@ -80,20 +80,23 @@ void main() {
     'indikator persyaratan diperbarui dan kembali saat isian dihapus',
     (tester) async {
       final semantics = tester.ensureSemantics();
-      addTearDown(semantics.dispose);
-      await tester.pumpWidget(const MaterialApp(home: SignupPage()));
-      await fillField(tester, 'password', 'DapurKuy42!');
-      await fillField(tester, 'confirmation', 'DapurKuy42!');
-      await tester.ensureVisible(find.text('Min 8'));
-      await tester.pumpAndSettle();
-      for (final label in ['Min 8', 'Kapital', 'Angka', 'Simbol', 'Cocok']) {
-        expect(find.bySemanticsLabel('$label: terpenuhi'), findsOneWidget);
-      }
+      try {
+        await tester.pumpWidget(const MaterialApp(home: SignupPage()));
+        await fillField(tester, 'password', 'DapurKuy42!');
+        await fillField(tester, 'confirmation', 'DapurKuy42!');
+        await tester.ensureVisible(find.text('Min 8'));
+        await tester.pumpAndSettle();
+        for (final label in ['Min 8', 'Kapital', 'Angka', 'Simbol', 'Cocok']) {
+          expect(find.bySemanticsLabel('$label: terpenuhi'), findsOneWidget);
+        }
 
-      await fillField(tester, 'confirmation', '');
-      await tester.ensureVisible(find.text('Cocok'));
-      await tester.pumpAndSettle();
-      expect(find.bySemanticsLabel('Cocok: belum terpenuhi'), findsOneWidget);
+        await fillField(tester, 'confirmation', '');
+        await tester.ensureVisible(find.text('Cocok'));
+        await tester.pumpAndSettle();
+        expect(find.bySemanticsLabel('Cocok: belum terpenuhi'), findsOneWidget);
+      } finally {
+        semantics.dispose();
+      }
     },
   );
 

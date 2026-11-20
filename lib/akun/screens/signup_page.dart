@@ -1,7 +1,52 @@
 import 'package:flutter/material.dart';
 
-class SignupPage extends StatelessWidget {
+import '../signup_validation.dart';
+
+class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
+
+  @override
+  State<SignupPage> createState() => _SignupPageState();
+}
+
+class _SignupPageState extends State<SignupPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _name = TextEditingController();
+  final _username = TextEditingController();
+  final _email = TextEditingController();
+  final _password = TextEditingController();
+  final _confirmation = TextEditingController();
+  bool _acceptedTerms = false;
+  bool _showTermsError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _password.addListener(_refreshRequirements);
+    _confirmation.addListener(_refreshRequirements);
+  }
+
+  void _refreshRequirements() => setState(() {});
+
+  @override
+  void dispose() {
+    for (final controller in [
+      _name,
+      _username,
+      _email,
+      _password,
+      _confirmation,
+    ]) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  void _submit() {
+    final valid = _formKey.currentState!.validate();
+    setState(() => _showTermsError = !_acceptedTerms);
+    if (!valid || !_acceptedTerms) return;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,11 +134,15 @@ class SignupPage extends StatelessWidget {
                       border: Border.all(color: colors.border),
                     ),
                     child: Form(
+                      key: _formKey,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           _SignupField(
                             id: 'name',
+                            controller: _name,
+                            validator: SignupValidation.name,
+                            autofillHints: const [AutofillHints.name],
                             label: 'Nama Lengkap',
                             hint: 'Nama lengkap kamu',
                             icon: Icons.badge_outlined,
@@ -101,6 +150,9 @@ class SignupPage extends StatelessWidget {
                           ),
                           _SignupField(
                             id: 'username',
+                            controller: _username,
+                            validator: SignupValidation.username,
+                            autofillHints: const [AutofillHints.newUsername],
                             label: 'Username',
                             hint: 'username_kamu',
                             icon: Icons.alternate_email,
@@ -108,6 +160,9 @@ class SignupPage extends StatelessWidget {
                           ),
                           _SignupField(
                             id: 'email',
+                            controller: _email,
+                            validator: SignupValidation.email,
+                            autofillHints: const [AutofillHints.email],
                             label: 'Email',
                             hint: 'nama@email.com',
                             icon: Icons.mail_outline,
@@ -116,6 +171,9 @@ class SignupPage extends StatelessWidget {
                           ),
                           _SignupField(
                             id: 'password',
+                            controller: _password,
+                            validator: SignupValidation.password,
+                            autofillHints: const [AutofillHints.newPassword],
                             label: 'Kata Sandi',
                             hint: 'Minimal 8 karakter',
                             icon: Icons.lock_outline,
@@ -124,6 +182,12 @@ class SignupPage extends StatelessWidget {
                           ),
                           _SignupField(
                             id: 'confirmation',
+                            controller: _confirmation,
+                            validator: (value) => SignupValidation.confirmation(
+                              value,
+                              _password.text,
+                            ),
+                            autofillHints: const [AutofillHints.newPassword],
                             label: 'Konfirmasi Kata Sandi',
                             hint: 'Ulangi kata sandi',
                             icon: Icons.verified_user_outlined,
@@ -134,14 +198,26 @@ class SignupPage extends StatelessWidget {
                             spacing: 14,
                             runSpacing: 10,
                             children: [
-                              for (final label in [
-                                'Min 8',
-                                'Kapital',
-                                'Angka',
-                                'Simbol',
-                                'Cocok',
-                              ])
-                                _Requirement(label: label, colors: colors),
+                              for (final entry in {
+                                'Min 8': _password.text.length >= 8,
+                                'Kapital': SignupValidation.hasUppercase(
+                                  _password.text,
+                                ),
+                                'Angka': SignupValidation.hasNumber(
+                                  _password.text,
+                                ),
+                                'Simbol': SignupValidation.hasSymbol(
+                                  _password.text,
+                                ),
+                                'Cocok':
+                                    _confirmation.text.isNotEmpty &&
+                                    _confirmation.text == _password.text,
+                              }.entries)
+                                _Requirement(
+                                  label: entry.key,
+                                  satisfied: entry.value,
+                                  colors: colors,
+                                ),
                             ],
                           ),
                           const SizedBox(height: 16),
@@ -149,8 +225,15 @@ class SignupPage extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Checkbox(
-                                value: false,
-                                onChanged: (_) {},
+                                value: _acceptedTerms,
+                                semanticLabel:
+                                    'Setuju dengan Syarat & Ketentuan TAKARKUY',
+                                activeColor: colors.accent,
+                                checkColor: colors.actionText,
+                                onChanged: (value) => setState(() {
+                                  _acceptedTerms = value ?? false;
+                                  _showTermsError = !_acceptedTerms;
+                                }),
                                 side: BorderSide(color: colors.muted),
                               ),
                               Expanded(
@@ -186,8 +269,19 @@ class SignupPage extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 12),
+                          if (_showTermsError)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Text(
+                                'Setujui syarat terlebih dahulu.',
+                                style: TextStyle(
+                                  color: colors.error,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
                           FilledButton(
-                            onPressed: () {},
+                            onPressed: _submit,
                             style: FilledButton.styleFrom(
                               backgroundColor: colors.accent,
                               foregroundColor: colors.actionText,
@@ -254,6 +348,9 @@ class _SignupField extends StatelessWidget {
     required this.colors,
     this.keyboardType,
     this.obscure = false,
+    this.controller,
+    this.validator,
+    this.autofillHints,
   });
 
   final String id, label, hint;
@@ -261,6 +358,9 @@ class _SignupField extends StatelessWidget {
   final _SignupColors colors;
   final TextInputType? keyboardType;
   final bool obscure;
+  final TextEditingController? controller;
+  final FormFieldValidator<String>? validator;
+  final Iterable<String>? autofillHints;
 
   @override
   Widget build(BuildContext context) {
@@ -280,11 +380,28 @@ class _SignupField extends StatelessWidget {
           const SizedBox(height: 6),
           TextFormField(
             key: ValueKey('signup-$id'),
+            controller: controller,
+            validator: validator,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            autofillHints: autofillHints,
+            autocorrect: id == 'name',
+            enableSuggestions: !obscure,
+            textInputAction: TextInputAction.next,
             keyboardType: keyboardType,
             obscureText: obscure,
             style: TextStyle(color: colors.text, fontSize: 14),
             decoration: InputDecoration(
               hintText: hint,
+              errorMaxLines: 3,
+              errorStyle: TextStyle(color: colors.error),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: colors.error),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: colors.error, width: 1.5),
+              ),
               hintStyle: TextStyle(color: colors.muted, fontSize: 13),
               prefixIcon: Icon(icon, size: 18, color: colors.muted),
               suffixIcon: obscure
@@ -324,20 +441,35 @@ class _SignupField extends StatelessWidget {
 }
 
 class _Requirement extends StatelessWidget {
-  const _Requirement({required this.label, required this.colors});
+  const _Requirement({
+    required this.label,
+    required this.colors,
+    required this.satisfied,
+  });
 
   final String label;
   final _SignupColors colors;
+  final bool satisfied;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(Icons.radio_button_unchecked, size: 13, color: colors.muted),
-        const SizedBox(width: 4),
-        Text(label, style: TextStyle(fontSize: 11, color: colors.muted)),
-      ],
+    return Semantics(
+      label: '$label: ${satisfied ? 'terpenuhi' : 'belum terpenuhi'}',
+      excludeSemantics: true,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            satisfied
+                ? Icons.check_circle_outline
+                : Icons.radio_button_unchecked,
+            size: 13,
+            color: satisfied ? colors.accent : colors.muted,
+          ),
+          const SizedBox(width: 4),
+          Text(label, style: TextStyle(fontSize: 11, color: colors.muted)),
+        ],
+      ),
     );
   }
 }
@@ -355,4 +487,5 @@ class _SignupColors {
   Color get muted => dark ? const Color(0xFFA3BBAE) : const Color(0xFF5A6F64);
   Color get accent => dark ? const Color(0xFFD4F45A) : const Color(0xFF0F3D2E);
   Color get actionText => dark ? const Color(0xFF10251C) : Colors.white;
+  Color get error => dark ? const Color(0xFFF29D95) : const Color(0xFFB42318);
 }
