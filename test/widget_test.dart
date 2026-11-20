@@ -49,7 +49,7 @@ void main() {
     await tester.tap(find.text('Buka halaman daftar'));
     await tester.pumpAndSettle();
     expect(find.text('Daftar Akun'), findsOneWidget);
-    await tester.pageBack();
+    await tester.tap(find.text('Kembali'));
     await tester.pumpAndSettle();
     expect(find.text('Halaman Login'), findsOneWidget);
 
