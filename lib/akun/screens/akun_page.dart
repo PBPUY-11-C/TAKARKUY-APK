@@ -15,7 +15,11 @@ class AkunPage extends StatelessWidget {
             children: [
               const Text('Halaman Login'),
               TextButton(
-                onPressed: () => Navigator.pushNamed(context, '/signup'),
+                onPressed: () => Navigator.pushNamed(
+                  context,
+                  '/signup',
+                  arguments: const {'fromLogin': true},
+                ),
                 child: const Text('Buka halaman daftar'),
               ),
             ],

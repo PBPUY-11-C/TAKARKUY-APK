@@ -6,7 +6,7 @@ Future<void> fillField(WidgetTester tester, String id, String value) async {
   final field = find.byKey(ValueKey('signup-$id'));
   await tester.ensureVisible(field);
   await tester.enterText(field, value);
-  await tester.pump();
+  await tester.pumpAndSettle();
 }
 
 Future<void> fillValidForm(WidgetTester tester) async {
@@ -20,6 +20,7 @@ Future<void> fillValidForm(WidgetTester tester) async {
 Future<void> submitForm(WidgetTester tester) async {
   final button = find.widgetWithText(FilledButton, 'DaftarKuy');
   await tester.ensureVisible(button);
+  await tester.pumpAndSettle();
   await tester.tap(button);
   await tester.pumpAndSettle();
 }
@@ -108,6 +109,7 @@ void main() {
     await submitForm(tester);
     expect(find.text('Setujui syarat terlebih dahulu.'), findsOneWidget);
     await tester.ensureVisible(find.byType(Checkbox));
+    await tester.pumpAndSettle();
     await tester.tap(find.byType(Checkbox));
     await tester.pumpAndSettle();
     expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isTrue);

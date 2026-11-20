@@ -61,11 +61,11 @@ void main() {
     'syarat membuka dialog dan tidak otomatis mencentang persetujuan',
     (tester) async {
       await tester.pumpWidget(const MaterialApp(home: SignupPage()));
-      await tester.ensureVisible(find.text('Syarat & Ketentuan'));
-      await tester.tap(find.text('Syarat & Ketentuan'));
+      await tester.ensureVisible(find.byKey(const ValueKey('signup-terms')));
+      await tester.tap(find.byKey(const ValueKey('signup-terms')));
       await tester.pumpAndSettle();
       expect(find.byType(AlertDialog), findsOneWidget);
-      expect(find.text('Syarat & Ketentuan'), findsNWidgets(2));
+      expect(find.text('Syarat & Ketentuan'), findsOneWidget);
       await tester.tap(find.text('Mengerti'));
       await tester.pumpAndSettle();
       expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isFalse);
@@ -78,6 +78,7 @@ void main() {
       await tester.pumpWidget(const MaterialApp(home: SignupPage()));
       await fillValidForm(tester);
       await tester.ensureVisible(find.byType(Checkbox));
+      await tester.pumpAndSettle();
       await tester.tap(find.byType(Checkbox));
       await tester.pump();
       await submitForm(tester);
