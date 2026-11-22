@@ -7,6 +7,29 @@ import 'package:takarkuy_apk/main.dart';
 import 'signup_validation_test.dart' show fillField, fillValidForm, submitForm;
 
 void main() {
+  testWidgets('drawer Akun tetap terhubung ke register dan kembali ke menu', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const TakarKuyApp());
+    await tester.tap(find.byTooltip('Buka menu navigasi'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Akun & Preferensi'));
+    await tester.pumpAndSettle();
+    expect(find.text('Halaman Login'), findsOneWidget);
+    await tester.tap(find.text('Buka halaman daftar'));
+    await tester.pumpAndSettle();
+    expect(find.text('Daftar Akun'), findsOneWidget);
+    await tester.ensureVisible(find.text('MasukKuy'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('MasukKuy'));
+    await tester.pumpAndSettle();
+    expect(find.text('Halaman Login'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.text('Akun'), findsOneWidget);
+    expect(find.text('Halaman Login'), findsNothing);
+  });
+
   testWidgets('tombol mata hanya mengubah visibilitas kolom terkait', (
     tester,
   ) async {

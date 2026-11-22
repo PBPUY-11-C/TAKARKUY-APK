@@ -1,29 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:takarkuy_apk/akun/screens/akun_page.dart';
 
+import 'package:takarkuy_apk/akun/screens/akun_page.dart';
 import 'package:takarkuy_apk/dashboard/screens/dashboard_screen.dart';
 import 'package:takarkuy_apk/pantry/screens/pantry_page.dart';
 import 'package:takarkuy_apk/planner/planner_page.dart';
+import 'package:takarkuy_apk/recipe_book/screens/recipe_list_page.dart';
+import 'package:takarkuy_apk/widgets/left_drawer.dart';
 
 /// Warna dari design system web (static/takarkuy/base.css).
 class TakarKuyColors {
   static const green = Color(0xFF0F3D2E);
   static const lime = Color(0xFFD4F45A);
-  static const soft = Color(0xFFE6F5EC);
   static const line = Color(0xFFB8DCC7);
   static const ink = Color(0xFF10251C);
   static const muted = Color(0xFF5A6F64);
   static const canvas = Color(0xFFF2F8F4);
 }
 
-/// Satu tombol modul di halaman awal; `page` null berarti halamannya belum dibuat.
+/// Satu tombol modul di halaman awal beserta halaman yang dibukanya.
 class ModuleItem {
-  const ModuleItem(this.name, this.description, this.icon, {this.page});
+  const ModuleItem(this.name, this.description, this.icon, this.page);
 
   final String name;
   final String description;
   final IconData icon;
-  final Widget? page;
+  final Widget page;
 }
 
 /// Halaman awal aplikasi: header TAKARKUY dan kartu menuju kelima modul.
@@ -31,36 +32,18 @@ class MenuPage extends StatelessWidget {
   const MenuPage({super.key});
 
   static const modules = [
-    ModuleItem(
-      'Planner',
-      'Susun menu sesuai budget',
-      Icons.calculate_outlined,
-      page: PlannerPage(),
-    ),
-    ModuleItem(
-      'Pantry',
-      'Catat stok bahan di dapur',
-      Icons.kitchen_outlined,
-      page: PantryPage(),
-    ),
-    ModuleItem('Resep', 'Cari resep dan mulai masak', Icons.menu_book_outlined),
-    ModuleItem(
-      'Dashboard',
-      'Ringkasan menu hari ini',
-      Icons.space_dashboard_outlined,
-      page: DashboardScreen(),
-    ),
-    ModuleItem(
-      'Akun',
-      'Masuk atau daftar akun',
-      Icons.person_outline,
-      page: AkunPage(),
-    ),
+    ModuleItem('Planner', 'Susun menu sesuai budget', Icons.calculate_outlined, PlannerPage()),
+    ModuleItem('Pantry', 'Catat stok bahan di dapur', Icons.kitchen_outlined, PantryPage()),
+    ModuleItem('Resep', 'Cari resep dan mulai masak', Icons.menu_book_outlined, RecipeListPage()),
+    ModuleItem('Dashboard', 'Ringkasan menu hari ini', Icons.space_dashboard_outlined,
+        DashboardScreen()),
+    ModuleItem('Akun', 'Masuk atau daftar akun', Icons.person_outline, AkunPage()),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const LeftDrawer(),
       body: CustomScrollView(
         slivers: [
           const SliverToBoxAdapter(child: _Header()),
@@ -76,9 +59,9 @@ class MenuPage extends StatelessWidget {
                   // Tinggi tetap, bukan rasio, supaya teks tidak terpotong di layar sempit.
                   mainAxisExtent: 176,
                 ),
-                delegate: SliverChildListDelegate([
-                  for (final item in modules) ModuleCard(item),
-                ]),
+                delegate: SliverChildListDelegate(
+                  [for (final item in modules) ModuleCard(item)],
+                ),
               ),
             ),
           ),
@@ -102,16 +85,8 @@ class _Header extends StatelessWidget {
       child: Stack(
         children: [
           // Lingkaran lime sebagai aksen, ditumpuk di belakang teks dengan Stack.
-          const Positioned(
-            right: -40,
-            top: -30,
-            child: _Blob(size: 150, opacity: 0.9),
-          ),
-          const Positioned(
-            right: 70,
-            bottom: -50,
-            child: _Blob(size: 90, opacity: 0.35),
-          ),
+          const Positioned(right: -40, top: -30, child: _Blob(size: 150, opacity: 0.9)),
+          const Positioned(right: 70, bottom: -50, child: _Blob(size: 90, opacity: 0.35)),
           SafeArea(
             bottom: false,
             child: Padding(
@@ -119,18 +94,31 @@ class _Header extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'TAKARKUY',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'TAKARKUY',
+                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1,
+                              ),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Buka menu navigasi',
+                        onPressed: () => Scaffold.of(context).openDrawer(),
+                        icon: const Icon(Icons.menu, color: Colors.white, size: 28),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Takar budget, pakai stok yang ada,\nmasak tanpa sisa.',
-                    style: Theme.of(context).textTheme.bodyLarge
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyLarge
                         ?.copyWith(color: Colors.white.withValues(alpha: 0.9)),
                   ),
                 ],
@@ -162,8 +150,7 @@ class _Blob extends StatelessWidget {
   }
 }
 
-/// Kartu modul yang sedikit mengecil saat ditekan (AnimatedScale), lalu membuka halamannya
-/// atau memberi tahu bahwa halamannya segera hadir.
+/// Kartu modul yang sedikit mengecil saat ditekan (AnimatedScale), lalu membuka halamannya.
 class ModuleCard extends StatefulWidget {
   const ModuleCard(this.item, {super.key});
 
@@ -177,19 +164,7 @@ class _ModuleCardState extends State<ModuleCard> {
   bool _pressed = false;
 
   void _open() {
-    final page = widget.item.page;
-    if (page != null) {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => page));
-      return;
-    }
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          content: Text('Halaman ${widget.item.name} segera hadir.'),
-        ),
-      );
+    Navigator.push(context, MaterialPageRoute(builder: (_) => widget.item.page));
   }
 
   @override
@@ -218,9 +193,7 @@ class _ModuleCardState extends State<ModuleCard> {
                   width: 52,
                   height: 52,
                   decoration: BoxDecoration(
-                    color: item.page != null
-                        ? TakarKuyColors.lime
-                        : TakarKuyColors.soft,
+                    color: TakarKuyColors.lime,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Icon(item.icon, color: TakarKuyColors.green, size: 28),
@@ -229,16 +202,18 @@ class _ModuleCardState extends State<ModuleCard> {
                 Text(
                   item.name,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: TakarKuyColors.ink,
-                    fontWeight: FontWeight.w700,
-                  ),
+                        color: TakarKuyColors.ink,
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   item.description,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
                       ?.copyWith(color: TakarKuyColors.muted),
                 ),
               ],
