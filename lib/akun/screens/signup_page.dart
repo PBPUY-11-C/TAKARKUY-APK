@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../auth_layout.dart';
 import '../auth_theme.dart';
 
 import '../signup_validation.dart';
@@ -117,322 +118,194 @@ class _SignupPageState extends State<SignupPage> {
   @override
   Widget build(BuildContext context) {
     final colors = AuthColors(_brightness);
-    return Theme(
-      data: _theme,
-      child: Scaffold(
-        backgroundColor: colors.background,
-        body: SafeArea(
-          child: SingleChildScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 460),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        TextButton.icon(
-                          onPressed: () => Navigator.maybePop(context),
-                          icon: const Icon(Icons.arrow_back, size: 20),
-                          label: const Text('Kembali'),
-                          style: TextButton.styleFrom(
-                            foregroundColor: colors.muted,
-                            padding: EdgeInsets.zero,
-                            minimumSize: const Size(80, 48),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        IconButton(
-                          tooltip: colors.dark
-                              ? 'Gunakan mode terang'
-                              : 'Gunakan mode gelap',
-                          onPressed: () => setState(
-                            () => _brightnessOverride = colors.dark
-                                ? Brightness.light
-                                : Brightness.dark,
-                          ),
-                          icon: Icon(
-                            colors.dark
-                                ? Icons.light_mode_outlined
-                                : Icons.dark_mode_outlined,
-                            color: colors.muted,
-                            size: 20,
-                          ),
-                        ),
-                        Expanded(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: colors.field,
-                                  borderRadius: BorderRadius.circular(9),
-                                ),
-                                child: Icon(
-                                  Icons.soup_kitchen_outlined,
-                                  size: 20,
-                                  color: colors.accent,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Flexible(
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    'TAKARKUY',
-                                    style: TextStyle(
-                                      color: colors.text,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+    return AuthLayout(
+      theme: _theme,
+      colors: colors,
+      backLabel: 'Kembali',
+      onBack: () => Navigator.maybePop(context),
+      onToggleTheme: () => setState(
+        () => _brightnessOverride = colors.dark
+            ? Brightness.light
+            : Brightness.dark,
+      ),
+      title: 'Daftar Akun',
+      description: 'Mulai atur porsi dan belanja dapur lebih hemat.',
+      form: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _SignupField(
+              id: 'name',
+              controller: _name,
+              validator: SignupValidation.name,
+              autofillHints: const [AutofillHints.name],
+              label: 'Nama Lengkap',
+              hint: 'Nama lengkap kamu',
+              icon: Icons.badge_outlined,
+              colors: colors,
+            ),
+            _SignupField(
+              id: 'username',
+              controller: _username,
+              validator: SignupValidation.username,
+              autofillHints: const [AutofillHints.newUsername],
+              label: 'Username',
+              hint: 'username_kamu',
+              icon: Icons.alternate_email,
+              colors: colors,
+            ),
+            _SignupField(
+              id: 'email',
+              controller: _email,
+              validator: SignupValidation.email,
+              autofillHints: const [AutofillHints.email],
+              label: 'Email',
+              hint: 'nama@email.com',
+              icon: Icons.mail_outline,
+              keyboardType: TextInputType.emailAddress,
+              colors: colors,
+            ),
+            _SignupField(
+              id: 'password',
+              controller: _password,
+              validator: SignupValidation.password,
+              onToggle: () => setState(() => _showPassword = !_showPassword),
+              autofillHints: const [AutofillHints.newPassword],
+              label: 'Kata Sandi',
+              hint: 'Minimal 8 karakter',
+              icon: Icons.lock_outline,
+              obscure: !_showPassword,
+              colors: colors,
+            ),
+            _SignupField(
+              id: 'confirmation',
+              controller: _confirmation,
+              validator: (value) =>
+                  SignupValidation.confirmation(value, _password.text),
+              onToggle: () =>
+                  setState(() => _showConfirmation = !_showConfirmation),
+              onSubmitted: (_) => _submit(),
+              autofillHints: const [AutofillHints.newPassword],
+              label: 'Konfirmasi Kata Sandi',
+              hint: 'Ulangi kata sandi',
+              icon: Icons.verified_user_outlined,
+              obscure: !_showConfirmation,
+              colors: colors,
+            ),
+            Wrap(
+              spacing: 14,
+              runSpacing: 10,
+              children: [
+                for (final entry in {
+                  'Min 8': _password.text.length >= 8,
+                  'Kapital': SignupValidation.hasUppercase(_password.text),
+                  'Angka': SignupValidation.hasNumber(_password.text),
+                  'Simbol': SignupValidation.hasSymbol(_password.text),
+                  'Cocok':
+                      _confirmation.text.isNotEmpty &&
+                      _confirmation.text == _password.text,
+                }.entries)
+                  _Requirement(
+                    label: entry.key,
+                    satisfied: entry.value,
+                    colors: colors,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Checkbox(
+                  value: _acceptedTerms,
+                  semanticLabel: 'Setuju dengan Syarat & Ketentuan TAKARKUY',
+                  activeColor: colors.accent,
+                  checkColor: colors.actionText,
+                  onChanged: (value) => setState(() {
+                    _acceptedTerms = value ?? false;
+                    _showTermsError = !_acceptedTerms;
+                  }),
+                  side: BorderSide(color: colors.muted),
+                ),
+                Expanded(
+                  child: TextButton(
+                    key: const ValueKey('signup-terms'),
+                    onPressed: () => _showNotice(
+                      'Syarat & Ketentuan',
+                      'Dokumen akan tersedia sebelum pendaftaran dibuka.',
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Daftar Akun',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.8,
-                        color: colors.text,
-                      ),
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      alignment: Alignment.centerLeft,
+                      minimumSize: const Size(0, 48),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Mulai atur porsi dan belanja dapur lebih hemat.',
-                      style: TextStyle(color: colors.muted, fontSize: 13),
-                    ),
-                    const SizedBox(height: 22),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: colors.card,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: colors.border),
-                      ),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _SignupField(
-                              id: 'name',
-                              controller: _name,
-                              validator: SignupValidation.name,
-                              autofillHints: const [AutofillHints.name],
-                              label: 'Nama Lengkap',
-                              hint: 'Nama lengkap kamu',
-                              icon: Icons.badge_outlined,
-                              colors: colors,
-                            ),
-                            _SignupField(
-                              id: 'username',
-                              controller: _username,
-                              validator: SignupValidation.username,
-                              autofillHints: const [AutofillHints.newUsername],
-                              label: 'Username',
-                              hint: 'username_kamu',
-                              icon: Icons.alternate_email,
-                              colors: colors,
-                            ),
-                            _SignupField(
-                              id: 'email',
-                              controller: _email,
-                              validator: SignupValidation.email,
-                              autofillHints: const [AutofillHints.email],
-                              label: 'Email',
-                              hint: 'nama@email.com',
-                              icon: Icons.mail_outline,
-                              keyboardType: TextInputType.emailAddress,
-                              colors: colors,
-                            ),
-                            _SignupField(
-                              id: 'password',
-                              controller: _password,
-                              validator: SignupValidation.password,
-                              onToggle: () => setState(
-                                () => _showPassword = !_showPassword,
-                              ),
-                              autofillHints: const [AutofillHints.newPassword],
-                              label: 'Kata Sandi',
-                              hint: 'Minimal 8 karakter',
-                              icon: Icons.lock_outline,
-                              obscure: !_showPassword,
-                              colors: colors,
-                            ),
-                            _SignupField(
-                              id: 'confirmation',
-                              controller: _confirmation,
-                              validator: (value) =>
-                                  SignupValidation.confirmation(
-                                    value,
-                                    _password.text,
-                                  ),
-                              onToggle: () => setState(
-                                () => _showConfirmation = !_showConfirmation,
-                              ),
-                              onSubmitted: (_) => _submit(),
-                              autofillHints: const [AutofillHints.newPassword],
-                              label: 'Konfirmasi Kata Sandi',
-                              hint: 'Ulangi kata sandi',
-                              icon: Icons.verified_user_outlined,
-                              obscure: !_showConfirmation,
-                              colors: colors,
-                            ),
-                            Wrap(
-                              spacing: 14,
-                              runSpacing: 10,
-                              children: [
-                                for (final entry in {
-                                  'Min 8': _password.text.length >= 8,
-                                  'Kapital': SignupValidation.hasUppercase(
-                                    _password.text,
-                                  ),
-                                  'Angka': SignupValidation.hasNumber(
-                                    _password.text,
-                                  ),
-                                  'Simbol': SignupValidation.hasSymbol(
-                                    _password.text,
-                                  ),
-                                  'Cocok':
-                                      _confirmation.text.isNotEmpty &&
-                                      _confirmation.text == _password.text,
-                                }.entries)
-                                  _Requirement(
-                                    label: entry.key,
-                                    satisfied: entry.value,
-                                    colors: colors,
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Checkbox(
-                                  value: _acceptedTerms,
-                                  semanticLabel: 'Setuju dengan Syarat & Ketentuan TAKARKUY',
-                                  activeColor: colors.accent,
-                                  checkColor: colors.actionText,
-                                  onChanged: (value) => setState(() {
-                                    _acceptedTerms = value ?? false;
-                                    _showTermsError = !_acceptedTerms;
-                                  }),
-                                  side: BorderSide(color: colors.muted),
-                                ),
-                                Expanded(
-                                  child: TextButton(
-                                    key: const ValueKey('signup-terms'),
-                                    onPressed: () => _showNotice(
-                                      'Syarat & Ketentuan',
-                                      'Dokumen akan tersedia sebelum pendaftaran dibuka.',
-                                    ),
-                                    style: TextButton.styleFrom(
-                                      padding: EdgeInsets.zero,
-                                      alignment: Alignment.centerLeft,
-                                      minimumSize: const Size(0, 48),
-                                    ),
-                                    child: Text.rich(
-                                      TextSpan(
-                                        text: 'Saya setuju dengan ',
-                                        style: TextStyle(
-                                          color: colors.muted,
-                                          fontSize: 12,
-                                        ),
-                                        children: [
-                                          TextSpan(
-                                            text: 'Syarat & Ketentuan',
-                                            style: TextStyle(
-                                              color: colors.accent,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          const TextSpan(text: ' TAKARKUY.'),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            if (_showTermsError)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: Text(
-                                  'Setujui syarat terlebih dahulu.',
-                                  style: TextStyle(
-                                    color: colors.error,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                            FilledButton(
-                              onPressed: _submit,
-                              style: FilledButton.styleFrom(
-                                backgroundColor: colors.accent,
-                                foregroundColor: colors.actionText,
-                                minimumSize: const Size.fromHeight(48),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    'DaftarKuy',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  SizedBox(width: 10),
-                                  Icon(Icons.arrow_forward, size: 20),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Center(
-                      child: Wrap(
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        alignment: WrapAlignment.center,
+                    child: Text.rich(
+                      TextSpan(
+                        text: 'Saya setuju dengan ',
+                        style: TextStyle(color: colors.muted, fontSize: 12),
                         children: [
-                          Text(
-                            'Sudah punya akun?',
-                            style: TextStyle(color: colors.muted),
-                          ),
-                          TextButton(
-                            onPressed: _goToLogin,
-                            style: TextButton.styleFrom(
-                              foregroundColor: colors.accent,
-                            ),
-                            child: const Text(
-                              'MasukKuy',
-                              style: TextStyle(fontWeight: FontWeight.w800),
+                          TextSpan(
+                            text: 'Syarat & Ketentuan',
+                            style: TextStyle(
+                              color: colors.accent,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
+                          const TextSpan(text: ' TAKARKUY.'),
                         ],
                       ),
                     ),
-                  ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (_showTermsError)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(
+                  'Setujui syarat terlebih dahulu.',
+                  style: TextStyle(color: colors.error, fontSize: 12),
                 ),
               ),
+            FilledButton(
+              onPressed: _submit,
+              style: FilledButton.styleFrom(
+                backgroundColor: colors.accent,
+                foregroundColor: colors.actionText,
+                minimumSize: const Size.fromHeight(48),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Flexible(
+                    child: Text(
+                      'DaftarKuy',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Icon(Icons.arrow_forward, size: 20),
+                ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
+      footerLabel: 'Sudah punya akun?',
+      footerAction: 'MasukKuy',
+      onFooterAction: _goToLogin,
     );
   }
 }
