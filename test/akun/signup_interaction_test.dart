@@ -15,19 +15,19 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Akun & Preferensi'));
     await tester.pumpAndSettle();
-    expect(find.text('Halaman Login'), findsOneWidget);
-    await tester.tap(find.text('Buka halaman daftar'));
+    expect(find.text('Selamat Datang'), findsOneWidget);
+    await tester.tap(find.text('DaftarKuy'));
     await tester.pumpAndSettle();
     expect(find.text('Daftar Akun'), findsOneWidget);
     await tester.ensureVisible(find.text('MasukKuy'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('MasukKuy'));
     await tester.pumpAndSettle();
-    expect(find.text('Halaman Login'), findsOneWidget);
-    await tester.pageBack();
+    expect(find.text('Selamat Datang'), findsOneWidget);
+    await tester.tap(find.text('Kembali ke beranda'));
     await tester.pumpAndSettle();
     expect(find.text('Akun'), findsOneWidget);
-    expect(find.text('Halaman Login'), findsNothing);
+    expect(find.text('Selamat Datang'), findsNothing);
   });
 
   testWidgets('tombol mata hanya mengubah visibilitas kolom terkait', (
@@ -145,8 +145,8 @@ void main() {
     await tester.ensureVisible(find.text('MasukKuy'));
     await tester.tap(find.text('MasukKuy'));
     await tester.pumpAndSettle();
-    expect(find.text('Halaman Login'), findsOneWidget);
-    await tester.pageBack();
+    expect(find.text('Selamat Datang'), findsOneWidget);
+    await tester.tap(find.text('Kembali ke beranda'));
     await tester.pumpAndSettle();
     expect(find.text('Buka Register'), findsOneWidget);
   });
@@ -158,14 +158,14 @@ void main() {
     await tester.ensureVisible(find.text('Akun'));
     await tester.tap(find.text('Akun'));
     await tester.pumpAndSettle();
-    expect(find.text('Halaman Login'), findsOneWidget);
-    await tester.tap(find.text('Buka halaman daftar'));
+    expect(find.text('Selamat Datang'), findsOneWidget);
+    await tester.tap(find.text('DaftarKuy'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('MasukKuy'));
     await tester.tap(find.text('MasukKuy'));
     await tester.pumpAndSettle();
-    expect(find.text('Halaman Login'), findsOneWidget);
-    await tester.pageBack();
+    expect(find.text('Selamat Datang'), findsOneWidget);
+    await tester.tap(find.text('Kembali ke beranda'));
     await tester.pumpAndSettle();
     expect(find.text('Akun'), findsOneWidget);
   });

@@ -44,17 +44,17 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('MasukKuy'));
     await tester.pumpAndSettle();
-    expect(find.text('Halaman Login'), findsOneWidget);
+    expect(find.text('Selamat Datang'), findsOneWidget);
 
-    await tester.tap(find.text('Buka halaman daftar'));
+    await tester.tap(find.text('DaftarKuy'));
     await tester.pumpAndSettle();
     expect(find.text('Daftar Akun'), findsOneWidget);
     await tester.tap(find.text('Kembali'));
     await tester.pumpAndSettle();
-    expect(find.text('Halaman Login'), findsOneWidget);
+    expect(find.text('Selamat Datang'), findsOneWidget);
 
-    await tester.pageBack();
+    await tester.tap(find.text('Kembali ke beranda'));
     await tester.pumpAndSettle();
-    expect(find.text('Pintasan Modul'), findsOneWidget);
+    expect(find.text('Akun'), findsOneWidget);
   });
 }
