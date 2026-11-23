@@ -1,8 +1,55 @@
 import 'package:flutter/material.dart';
 
 /// Halaman masuk Modul 3, dikembangkan dari kerangka Akun yang sudah ada.
-class AkunPage extends StatelessWidget {
+class AkunPage extends StatefulWidget {
   const AkunPage({super.key});
+
+  @override
+  State<AkunPage> createState() => _AkunPageState();
+}
+
+class _AkunPageState extends State<AkunPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _identifier = TextEditingController();
+  final _password = TextEditingController();
+
+  @override
+  void dispose() {
+    _identifier.dispose();
+    _password.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+    FocusScope.of(context).unfocus();
+    final colors = _LoginColors(Theme.of(context).brightness);
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: colors.card,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: colors.border, width: 1.5),
+        ),
+        title: Text(
+          'Login belum tersedia',
+          style: TextStyle(color: colors.text, fontSize: 20),
+        ),
+        content: Text(
+          'Silakan coba lagi nanti.',
+          style: TextStyle(color: colors.muted),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            style: TextButton.styleFrom(foregroundColor: colors.accent),
+            child: const Text('Mengerti'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -146,11 +193,17 @@ class AkunPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 28),
                         Form(
+                          key: _formKey,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               _LoginField(
                                 id: 'identifier',
+                                controller: _identifier,
+                                validator: (value) =>
+                                    value == null || value.trim().isEmpty
+                                    ? 'Isi email atau username.'
+                                    : null,
                                 label: 'Email atau Username',
                                 hint: 'contoh@email.com atau username',
                                 icon: Icons.person_outline,
@@ -159,6 +212,12 @@ class AkunPage extends StatelessWidget {
                               const SizedBox(height: 14),
                               _LoginField(
                                 id: 'password',
+                                controller: _password,
+                                validator: (value) =>
+                                    value == null || value.isEmpty
+                                    ? 'Isi kata sandi.'
+                                    : null,
+                                onSubmitted: (_) => _submit(),
                                 label: 'Kata Sandi',
                                 hint: 'Masukkan kata sandi',
                                 icon: Icons.lock_outline,
@@ -193,7 +252,7 @@ class AkunPage extends StatelessWidget {
                               ),
                               const SizedBox(height: 4),
                               FilledButton(
-                                onPressed: () {},
+                                onPressed: _submit,
                                 style: FilledButton.styleFrom(
                                   backgroundColor: colors.accent,
                                   foregroundColor: colors.actionText,
@@ -277,11 +336,17 @@ class _LoginField extends StatelessWidget {
     required this.hint,
     required this.icon,
     required this.colors,
+    this.controller,
+    this.validator,
+    this.onSubmitted,
   });
 
   final String id, label, hint;
   final IconData icon;
   final _LoginColors colors;
+  final TextEditingController? controller;
+  final FormFieldValidator<String>? validator;
+  final ValueChanged<String>? onSubmitted;
 
   @override
   Widget build(BuildContext context) {
@@ -305,6 +370,10 @@ class _LoginField extends StatelessWidget {
           label: label,
           child: TextFormField(
             key: ValueKey('login-$id'),
+            controller: controller,
+            validator: validator,
+            onFieldSubmitted: onSubmitted,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             obscureText: password,
             keyboardType: password
                 ? TextInputType.visiblePassword
@@ -320,6 +389,16 @@ class _LoginField extends StatelessWidget {
             style: TextStyle(color: colors.text, fontSize: 14),
             decoration: InputDecoration(
               hintText: hint,
+              errorMaxLines: 3,
+              errorStyle: TextStyle(color: colors.error),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: colors.error),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: colors.error, width: 1.5),
+              ),
               hintStyle: TextStyle(color: colors.muted, fontSize: 12),
               prefixIcon: Icon(icon, size: 18, color: colors.muted),
               suffixIcon: !password
