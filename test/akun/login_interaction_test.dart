@@ -13,6 +13,8 @@ void main() {
     await tester.ensureVisible(find.text('Akun'));
     await tester.tap(find.text('Akun'));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byTooltip('Gunakan mode gelap'));
+    await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Gunakan mode gelap'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('DaftarKuy'));
@@ -71,6 +73,8 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: AkunPage()));
     await fillLogin(tester, 'identifier', 'attar_rais');
     await tester.tap(find.text('Ingat saya'));
+    await tester.ensureVisible(find.byTooltip('Gunakan mode gelap'));
+    await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Gunakan mode gelap'));
     await tester.pumpAndSettle();
     expect(

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../auth_theme.dart';
+
 import '../signup_validation.dart';
 
 class SignupPage extends StatefulWidget {
@@ -21,16 +23,21 @@ class _SignupPageState extends State<SignupPage> {
   bool _showPassword = false;
   bool _showConfirmation = false;
   Brightness? _brightnessOverride;
+  bool _themeInitialized = false;
 
   Brightness get _brightness =>
       _brightnessOverride ?? Theme.of(context).brightness;
 
-  ThemeData get _theme => Theme.of(context).copyWith(
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: const Color(0xFF0F3D2E),
-      brightness: _brightness,
-    ),
-  );
+  ThemeData get _theme => authTheme(Theme.of(context), _brightness);
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_themeInitialized) {
+      _brightnessOverride = authBrightnessFromRoute(context);
+      _themeInitialized = true;
+    }
+  }
 
   @override
   void initState() {
@@ -70,12 +77,16 @@ class _SignupPageState extends State<SignupPage> {
         Navigator.canPop(context)) {
       Navigator.pop(context);
     } else {
-      Navigator.pushReplacementNamed(context, '/login');
+      Navigator.pushReplacementNamed(
+        context,
+        '/login',
+        arguments: {'brightness': _brightness},
+      );
     }
   }
 
   void _showNotice(String title, String message) {
-    final colors = _SignupColors(_brightness);
+    final colors = AuthColors(_brightness);
     showDialog<void>(
       context: context,
       builder: (dialogContext) => Theme(
@@ -105,7 +116,7 @@ class _SignupPageState extends State<SignupPage> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = _SignupColors(_brightness);
+    final colors = AuthColors(_brightness);
     return Theme(
       data: _theme,
       child: Scaffold(
@@ -444,7 +455,7 @@ class _SignupField extends StatelessWidget {
 
   final String id, label, hint;
   final IconData icon;
-  final _SignupColors colors;
+  final AuthColors colors;
   final TextInputType? keyboardType;
   final bool obscure;
   final TextEditingController? controller;
@@ -548,7 +559,7 @@ class _Requirement extends StatelessWidget {
   });
 
   final String label;
-  final _SignupColors colors;
+  final AuthColors colors;
   final bool satisfied;
 
   @override
@@ -572,20 +583,4 @@ class _Requirement extends StatelessWidget {
       ),
     );
   }
-}
-
-class _SignupColors {
-  const _SignupColors(this.brightness);
-  final Brightness brightness;
-  bool get dark => brightness == Brightness.dark;
-  Color get background =>
-      dark ? const Color(0xFF0F1713) : const Color(0xFFF2F8F4);
-  Color get card => dark ? const Color(0xFF14251C) : Colors.white;
-  Color get field => dark ? const Color(0xFF1B2D23) : const Color(0xFFE6F5EC);
-  Color get border => dark ? const Color(0xFF294334) : const Color(0xFFDCEBE2);
-  Color get text => dark ? const Color(0xFFF2F7F4) : const Color(0xFF10251C);
-  Color get muted => dark ? const Color(0xFFA3BBAE) : const Color(0xFF5A6F64);
-  Color get accent => dark ? const Color(0xFFD4F45A) : const Color(0xFF0F3D2E);
-  Color get actionText => dark ? const Color(0xFF10251C) : Colors.white;
-  Color get error => dark ? const Color(0xFFF29D95) : const Color(0xFFB42318);
 }
