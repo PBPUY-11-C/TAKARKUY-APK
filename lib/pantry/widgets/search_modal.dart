@@ -18,7 +18,7 @@ Future<void> showSearchStockModal(
     barrierLabel: 'Tutup pencarian',
     barrierColor: Colors.black54,
     transitionDuration: const Duration(milliseconds: 250),
-    pageBuilder: (dialogContext, _, __) {
+    pageBuilder: (dialogContext, _, _) {
       return Align(
         alignment: Alignment.topCenter,
         child: Material(
@@ -46,7 +46,7 @@ Future<void> showSearchStockModal(
         ),
       );
     },
-    transitionBuilder: (_, animation, __, child) {
+    transitionBuilder: (_, animation, _, child) {
       final slide = Tween<Offset>(
         begin: const Offset(0, -1),
         end: Offset.zero,
