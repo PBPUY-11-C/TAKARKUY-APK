@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:takarkuy_apk/akun/screens/akun_page.dart';
 import 'package:takarkuy_apk/dashboard/screens/dashboard_screen.dart';
 import 'package:takarkuy_apk/main.dart';
-import 'package:takarkuy_apk/pantry/screens/pantry_page.dart';
+import 'package:takarkuy_apk/pantry/pantry_page.dart';
 import 'package:takarkuy_apk/planner/planner_page.dart';
 import 'package:takarkuy_apk/recipe_book/screens/recipe_list_page.dart';
 import 'package:takarkuy_apk/screens/menu.dart';
