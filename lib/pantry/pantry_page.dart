@@ -5,7 +5,7 @@ import 'screens/input_manual.dart';
 import 'widgets/input_modal.dart';
 import 'widgets/pantry_card.dart';
 
-/// Halaman Stok Dapur
+/// Halaman Stok Dapur: tombol Tambah bahan, pencarian, filter, urutan, dan daftar kartu stok.
 class PantryPage extends StatefulWidget {
   const PantryPage({super.key, this.items, this._today});
 
@@ -18,11 +18,46 @@ class PantryPage extends StatefulWidget {
 }
 
 class _PantryPageState extends State<PantryPage> {
-  String? _expandedId;
+  String _query = '';
+  StockFilter _filter = StockFilter.all;
+  StockSort _sort = StockSort.expiry;
+  String? _expandedId; // id kartu yang sedang terbuka (hanya satu)
 
   DateTime get _today => widget._today ?? DateTime.now();
 
   late final List<PantryItem> _items = widget.items ?? sampleItems(_today);
+
+  /// Daftar yang tampil: sudah dicari, difilter, dan diurutkan.
+  List<PantryItem> get _visible {
+    final q = _query.trim().toLowerCase();
+    final today = _today;
+    final rows = _items.where((it) {
+      if (q.isNotEmpty && !it.name.toLowerCase().contains(q)) return false;
+      final days = it.daysLeft(today);
+      switch (_filter) {
+        case StockFilter.all:
+          return true;
+        case StockFilter.expiringSoon:
+          return days != null && days <= 7;
+        case StockFilter.noDate:
+          return days == null;
+      }
+    }).toList();
+
+    int byName(PantryItem a, PantryItem b) =>
+        a.name.toLowerCase().compareTo(b.name.toLowerCase());
+    rows.sort(_sort == StockSort.name
+        ? byName
+        : (a, b) {
+            final da = a.expiresOn, db = b.expiresOn;
+            if (da == null && db == null) return byName(a, b);
+            if (da == null) return 1; // tanpa tanggal di paling bawah
+            if (db == null) return -1;
+            final c = da.compareTo(db);
+            return c != 0 ? c : byName(a, b);
+          });
+    return rows;
+  }
 
   void _toast(String message) => ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
@@ -30,6 +65,7 @@ class _PantryPageState extends State<PantryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final items = _visible;
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F7),
       appBar: AppBar(
@@ -40,31 +76,41 @@ class _PantryPageState extends State<PantryPage> {
           padding: const EdgeInsets.all(16),
           children: [
             _addBar(),
+            const SizedBox(height: 8),
+            _searchField(),
+            const SizedBox(height: 8),
+            _filterChip(),
+            const SizedBox(height: 8),
+            _sortButton(),
             const SizedBox(height: 16),
-            
+            _countRow(items.length),
+            const SizedBox(height: 16),
             // --- Daftar kartu stok ---------------------------------------
-            for (final it in _items) ...[
-              PantryCard(
-                name: it.name,
-                quantity: it.quantityLabel,
-                expiry: it.expiryLabel(_today),
-                category: it.category,
-                location: it.location,
-                expiryDate: it.expiryDateLabel ?? 'Tanggal belum diketahui',
-                expanded: _expandedId == it.id,
-                onToggle: () => setState(
-                    () => _expandedId = _expandedId == it.id ? null : it.id),
-                onEdit: () => _toast('Ubah ${it.name}'),
-              ),
-              const SizedBox(height: 16),
-            ],
+            if (items.isEmpty)
+              Text('Tidak ada bahan yang cocok.', style: TextStyle(fontFamily: 'Inter', fontSize: 14, height: 20 / 14, fontWeight: FontWeight.w400, color: const Color(0xFF292929), leadingDistribution: TextLeadingDistribution.even))
+            else
+              for (final it in items) ...[
+                PantryCard(
+                  name: it.name,
+                  quantity: it.quantityLabel,
+                  expiry: it.expiryLabel(_today),
+                  category: it.category,
+                  location: it.location,
+                  expiryDate: it.expiryDateLabel ?? 'Tanggal belum diketahui',
+                  expanded: _expandedId == it.id,
+                  onToggle: () => setState(
+                      () => _expandedId = _expandedId == it.id ? null : it.id),
+                  onEdit: () => _toast('Ubah ${it.name}'),
+                ),
+                const SizedBox(height: 16),
+              ],
           ],
         ),
       ),
     );
   }
 
-  // --- Tombol Tambah -> modal -> form scan / manual -----------------
+  // --- Tombol "+ Tambah bahan" -> modal -> form scan / manual -----------------
   Widget _addBar() => _button(
         '+ Tambah bahan',
         () => showAddItemSheet(
@@ -80,6 +126,72 @@ class _PantryPageState extends State<PantryPage> {
         ),
         primary: true,
         height: 46,
+      );
+
+  // --- Cari bahan: tinggi 48, putih, garis #A6A6A6 -------------------------
+  Widget _searchField() => Container(
+        constraints: const BoxConstraints(minHeight: 48),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFFFFF),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: const Color(0xFFA6A6A6)),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        alignment: Alignment.center,
+        child: TextField(
+          onChanged: (v) => setState(() => _query = v),
+          style: TextStyle(fontFamily: 'Inter', fontSize: 14, height: 20 / 14, fontWeight: FontWeight.w400, color: const Color(0xFF292929), leadingDistribution: TextLeadingDistribution.even),
+          cursorColor: const Color(0xFF292929),
+          decoration: InputDecoration(
+            isCollapsed: true,
+            border: InputBorder.none,
+            hintText: 'Cari nama bahan…',
+            hintStyle: TextStyle(fontFamily: 'Inter', fontSize: 14, height: 20 / 14, fontWeight: FontWeight.w400, color: const Color(0xFF616161), leadingDistribution: TextLeadingDistribution.even),
+            contentPadding: const EdgeInsets.symmetric(vertical: 14),
+          ),
+        ),
+      );
+
+  // --- Chip dropdown "Semua stok": #F0F0F0, radius 22 ----------------------
+  Widget _filterChip() => PopupMenuButton<StockFilter>(
+        tooltip: 'Filter stok',
+        initialValue: _filter,
+        onSelected: (f) => setState(() => _filter = f),
+        itemBuilder: (_) => [
+          for (final f in StockFilter.values)
+            PopupMenuItem(value: f, child: Text(f.label, style: TextStyle(fontFamily: 'Inter', fontSize: 14, height: 20 / 14, fontWeight: FontWeight.w400, color: const Color(0xFF292929), leadingDistribution: TextLeadingDistribution.even))),
+        ],
+        child: Container(
+          height: 46,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF0F0F0),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: const Color(0xFFA6A6A6)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(_filter.label, style: TextStyle(fontFamily: 'Inter', fontSize: 14, height: 20 / 14, fontWeight: FontWeight.w500, color: const Color(0xFF292929), leadingDistribution: TextLeadingDistribution.even)),
+              const SizedBox(width: 8),
+              const Icon(Icons.keyboard_arrow_down, size: 16, color: Color(0xFF292929)),
+            ],
+          ),
+        ),
+      );
+
+  // --- Tombol urutan: secondary, tinggi 48 ---------------------------------
+  Widget _sortButton() => SizedBox(
+        width: double.infinity,
+        child: _button('Urut: ${_sort.label}', () => setState(() => _sort = _sort.next)),
+      );
+
+  // --- "N bahan · Ketuk bahan untuk detail" ---------------------------------
+  Widget _countRow(int n) => Text.rich(
+        TextSpan(children: [
+          TextSpan(text: '$n', style: TextStyle(fontFamily: 'Inter', fontSize: 13, height: 19 / 13, fontWeight: FontWeight.w600, color: const Color(0xFF292929), leadingDistribution: TextLeadingDistribution.even)),
+          TextSpan(text: ' bahan · Ketuk bahan untuk detail', style: TextStyle(fontFamily: 'Inter', fontSize: 13, height: 19 / 13, fontWeight: FontWeight.w400, color: const Color(0xFF292929), leadingDistribution: TextLeadingDistribution.even)),
+        ]),
       );
 }
 
@@ -124,6 +236,25 @@ Widget _button(
 // ---------------------------------------------------------------------------
 // Model & data buatan
 // ---------------------------------------------------------------------------
+
+enum StockFilter {
+  all('Semua stok'),
+  expiringSoon('Segera kedaluwarsa'),
+  noDate('Tanggal belum diketahui');
+
+  const StockFilter(this.label);
+  final String label;
+}
+
+enum StockSort {
+  expiry('Segera kedaluwarsa'),
+  name('Nama A–Z');
+
+  const StockSort(this.label);
+  final String label;
+
+  StockSort get next => this == expiry ? name : expiry;
+}
 
 class PantryItem {
   const PantryItem({
