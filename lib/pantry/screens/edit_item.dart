@@ -338,7 +338,19 @@ class _EditItemPageState extends State<EditItemPage> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(value, style: TextStyle(fontFamily: 'Inter', fontSize: 14, height: 20 / 14, fontWeight: FontWeight.w500, color: const Color(0xFF292929), leadingDistribution: TextLeadingDistribution.even)),
+              Flexible(
+                child: Text(
+                  value, 
+                  style: TextStyle(
+                    fontFamily: 'Inter', 
+                    fontSize: 14, 
+                    height: 20 / 14, 
+                    fontWeight: FontWeight.w500, 
+                    color: const Color(0xFF292929), 
+                    leadingDistribution: TextLeadingDistribution.even,
+                    ),
+                  ),
+                ),
               const SizedBox(width: 8),
               const Icon(Icons.keyboard_arrow_down, size: 16, color: Color(0xFF292929)),
             ],
