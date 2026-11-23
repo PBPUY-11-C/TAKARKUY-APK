@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../auth_error_banner.dart';
 import '../auth_layout.dart';
 import '../auth_theme.dart';
 
@@ -13,10 +14,12 @@ class AkunPage extends StatefulWidget {
 
 class _AkunPageState extends State<AkunPage> {
   final _formKey = GlobalKey<FormState>();
+  final _errorSummaryKey = GlobalKey();
   final _identifier = TextEditingController();
   final _password = TextEditingController();
   bool _showPassword = false;
   bool _rememberMe = false;
+  bool _submitted = false;
   bool _themeInitialized = false;
   Brightness? _brightnessOverride;
 
@@ -24,6 +27,20 @@ class _AkunPageState extends State<AkunPage> {
       _brightnessOverride ?? Theme.of(context).brightness;
   ThemeData get _theme => authTheme(Theme.of(context), _brightness);
   AuthColors get _colors => AuthColors(_brightness);
+
+  String? _identifierError(String? value) =>
+      value == null || value.trim().isEmpty ? 'Isi email atau username.' : null;
+
+  String? _passwordError(String? value) =>
+      value == null || value.isEmpty ? 'Isi kata sandi.' : null;
+
+  bool get _hasErrors =>
+      _identifierError(_identifier.text) != null ||
+      _passwordError(_password.text) != null;
+
+  void _onFormChanged() {
+    if (_submitted) setState(() {});
+  }
 
   @override
   void didChangeDependencies() {
@@ -42,8 +59,13 @@ class _AkunPageState extends State<AkunPage> {
   }
 
   void _submit() {
-    if (!_formKey.currentState!.validate()) return;
+    setState(() => _submitted = true);
+    final valid = _formKey.currentState!.validate();
     FocusScope.of(context).unfocus();
+    if (!valid) {
+      revealAuthError(_errorSummaryKey);
+      return;
+    }
     final colors = _colors;
     showDialog<void>(
       context: context,
@@ -92,15 +114,27 @@ class _AkunPageState extends State<AkunPage> {
       description: 'Masuk ke akunmu untuk lanjut memasak.',
       form: Form(
         key: _formKey,
+        onChanged: _onFormChanged,
+        autovalidateMode: _submitted
+            ? AutovalidateMode.always
+            : AutovalidateMode.disabled,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (_submitted && _hasErrors) ...[
+              AuthErrorBanner(
+                key: _errorSummaryKey,
+                id: 'login',
+                title: 'Periksa isian login',
+                colors: colors,
+              ),
+              const SizedBox(height: 18),
+            ],
             _LoginField(
               id: 'identifier',
               controller: _identifier,
-              validator: (value) => value == null || value.trim().isEmpty
-                  ? 'Isi email atau username.'
-                  : null,
+              validator: _identifierError,
+              showErrors: _submitted,
               label: 'Email atau Username',
               hint: 'contoh@email.com atau username',
               icon: Icons.person_outline,
@@ -112,8 +146,8 @@ class _AkunPageState extends State<AkunPage> {
               showPassword: _showPassword,
               onToggle: () => setState(() => _showPassword = !_showPassword),
               controller: _password,
-              validator: (value) =>
-                  value == null || value.isEmpty ? 'Isi kata sandi.' : null,
+              validator: _passwordError,
+              showErrors: _submitted,
               onSubmitted: (_) => _submit(),
               label: 'Kata Sandi',
               hint: 'Masukkan kata sandi',
@@ -199,6 +233,7 @@ class _LoginField extends StatelessWidget {
     this.validator,
     this.onSubmitted,
     this.showPassword = false,
+    this.showErrors = false,
     this.onToggle,
   });
 
@@ -209,10 +244,12 @@ class _LoginField extends StatelessWidget {
   final FormFieldValidator<String>? validator;
   final ValueChanged<String>? onSubmitted;
   final bool showPassword;
+  final bool showErrors;
   final VoidCallback? onToggle;
 
   @override
   Widget build(BuildContext context) {
+    final invalid = showErrors && validator?.call(controller?.text) != null;
     final password = id == 'password';
     final visibilityLabel = showPassword
         ? 'Sembunyikan kata sandi'
@@ -269,7 +306,11 @@ class _LoginField extends StatelessWidget {
                 borderSide: BorderSide(color: colors.error, width: 1.5),
               ),
               hintStyle: TextStyle(color: colors.muted, fontSize: 12),
-              prefixIcon: Icon(icon, size: 18, color: colors.muted),
+              prefixIcon: Icon(
+                icon,
+                size: 18,
+                color: invalid ? colors.error : colors.muted,
+              ),
               suffixIcon: !password
                   ? null
                   : compact
@@ -298,7 +339,7 @@ class _LoginField extends StatelessWidget {
                       ),
                     ),
               filled: true,
-              fillColor: colors.field,
+              fillColor: invalid ? colors.errorSurface : colors.field,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 12,
                 vertical: 14,

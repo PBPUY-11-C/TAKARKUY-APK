@@ -18,6 +18,8 @@ class AuthColors {
   Color get accent => dark ? const Color(0xFFD4F45A) : const Color(0xFF007452);
   Color get actionText => dark ? const Color(0xFF10251C) : Colors.white;
   Color get error => dark ? const Color(0xFFF29D95) : const Color(0xFFB42318);
+  Color get errorSurface =>
+      dark ? const Color(0xFF351F22) : const Color(0xFFFFF2F3);
 }
 
 ThemeData authTheme(ThemeData base, Brightness brightness) => base.copyWith(
