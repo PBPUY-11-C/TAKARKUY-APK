@@ -75,7 +75,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       tester.widget<Scaffold>(find.byType(Scaffold)).backgroundColor,
-      const Color(0xFFF2F8F4),
+      const Color(0xFFE9FFF4),
     );
     expect(find.text('Attar Rais'), findsOneWidget);
   });

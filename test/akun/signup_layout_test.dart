@@ -42,7 +42,7 @@ void main() {
         scaffold.backgroundColor,
         brightness == Brightness.dark
             ? const Color(0xFF0F1713)
-            : const Color(0xFFF2F8F4),
+            : const Color(0xFFE9FFF4),
       );
       final action = tester.widget<FilledButton>(
         find.widgetWithText(FilledButton, 'DaftarKuy'),
@@ -51,7 +51,7 @@ void main() {
         action.style!.backgroundColor!.resolve({}),
         brightness == Brightness.dark
             ? const Color(0xFFD4F45A)
-            : const Color(0xFF0F3D2E),
+            : const Color(0xFF007452),
       );
     });
   }

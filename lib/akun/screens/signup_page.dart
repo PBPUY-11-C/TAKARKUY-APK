@@ -395,7 +395,7 @@ class _SignupField extends StatelessWidget {
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined,
                         size: 19,
-                        color: colors.muted,
+                        color: colors.accent,
                       ),
                     )
                   : null,

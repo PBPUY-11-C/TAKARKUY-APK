@@ -23,12 +23,7 @@ class _AkunPageState extends State<AkunPage> {
   Brightness get _brightness =>
       _brightnessOverride ?? Theme.of(context).brightness;
   ThemeData get _theme => authTheme(Theme.of(context), _brightness);
-  AuthColors get _colors => AuthColors(
-    _brightness,
-    lightBackground: const Color(0xFFE9FFF4),
-    lightField: const Color(0xFFF3F8F5),
-    lightAccent: const Color(0xFF007452),
-  );
+  AuthColors get _colors => AuthColors(_brightness);
 
   @override
   void didChangeDependencies() {

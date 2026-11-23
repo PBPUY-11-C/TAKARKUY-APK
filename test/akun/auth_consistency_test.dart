@@ -5,6 +5,46 @@ import 'package:takarkuy_apk/akun/screens/signup_page.dart';
 
 void main() {
   for (final brightness in Brightness.values) {
+    testWidgets('palet login dan register sama pada ${brightness.name}', (
+      tester,
+    ) async {
+      Future<Map<String, Color?>> palette(Widget page) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: ThemeData(brightness: brightness),
+            home: page,
+          ),
+        );
+        await tester.pumpAndSettle();
+        final field = tester.widget<TextField>(find.byType(TextField).first);
+        final decoration = field.decoration!;
+        final action = tester.widget<FilledButton>(find.byType(FilledButton));
+        final visibility = tester.widget<Icon>(
+          find.byIcon(Icons.visibility_outlined).first,
+        );
+        return {
+          'latar': tester
+              .widget<Scaffold>(find.byType(Scaffold))
+              .backgroundColor,
+          'isian': decoration.fillColor,
+          'teks': field.style!.color,
+          'placeholder': decoration.hintStyle!.color,
+          'garis': decoration.enabledBorder!.borderSide.color,
+          'fokus': decoration.focusedBorder!.borderSide.color,
+          'error': decoration.errorStyle!.color,
+          'ikon sandi':
+              visibility.color ??
+              IconTheme.of(tester.element(find.byWidget(visibility))).color,
+          'tombol': action.style!.backgroundColor!.resolve({}),
+          'teks tombol': action.style!.foregroundColor!.resolve({}),
+        };
+      }
+
+      final login = await palette(const AkunPage());
+      final signup = await palette(const SignupPage());
+      expect(signup, login);
+    });
+
     for (final width in [360.0, 800.0]) {
       testWidgets(
         'posisi navigasi dan identitas konsisten pada ${brightness.name} $width',
