@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../auth_error_banner.dart';
 import '../auth_layout.dart';
 import '../auth_theme.dart';
 
@@ -14,6 +15,7 @@ class SignupPage extends StatefulWidget {
 
 class _SignupPageState extends State<SignupPage> {
   final _formKey = GlobalKey<FormState>();
+  final _errorSummaryKey = GlobalKey();
   final _name = TextEditingController();
   final _username = TextEditingController();
   final _email = TextEditingController();
@@ -21,6 +23,7 @@ class _SignupPageState extends State<SignupPage> {
   final _confirmation = TextEditingController();
   bool _acceptedTerms = false;
   bool _showTermsError = false;
+  bool _submitted = false;
   bool _showPassword = false;
   bool _showConfirmation = false;
   Brightness? _brightnessOverride;
@@ -30,6 +33,20 @@ class _SignupPageState extends State<SignupPage> {
       _brightnessOverride ?? Theme.of(context).brightness;
 
   ThemeData get _theme => authTheme(Theme.of(context), _brightness);
+
+  bool get _hasErrors =>
+      !_acceptedTerms ||
+      [
+        SignupValidation.name(_name.text),
+        SignupValidation.username(_username.text),
+        SignupValidation.email(_email.text),
+        SignupValidation.password(_password.text),
+        SignupValidation.confirmation(_confirmation.text, _password.text),
+      ].any((error) => error != null);
+
+  void _onFormChanged() {
+    if (_submitted) setState(() {});
+  }
 
   @override
   void didChangeDependencies() {
@@ -65,9 +82,15 @@ class _SignupPageState extends State<SignupPage> {
 
   void _submit() {
     final valid = _formKey.currentState!.validate();
-    setState(() => _showTermsError = !_acceptedTerms);
-    if (!valid || !_acceptedTerms) return;
+    setState(() {
+      _submitted = true;
+      _showTermsError = !_acceptedTerms;
+    });
     FocusScope.of(context).unfocus();
+    if (!valid || !_acceptedTerms) {
+      revealAuthError(_errorSummaryKey);
+      return;
+    }
     _showNotice('Pendaftaran belum tersedia', 'Silakan coba lagi nanti.');
   }
 
@@ -132,11 +155,25 @@ class _SignupPageState extends State<SignupPage> {
       description: 'Mulai atur porsi dan belanja dapur lebih hemat.',
       form: Form(
         key: _formKey,
+        onChanged: _onFormChanged,
+        autovalidateMode: _submitted
+            ? AutovalidateMode.always
+            : AutovalidateMode.disabled,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (_submitted && _hasErrors) ...[
+              AuthErrorBanner(
+                key: _errorSummaryKey,
+                id: 'signup',
+                title: 'Periksa formulir',
+                colors: colors,
+              ),
+              const SizedBox(height: 18),
+            ],
             _SignupField(
               id: 'name',
+              showErrors: _submitted,
               controller: _name,
               validator: SignupValidation.name,
               autofillHints: const [AutofillHints.name],
@@ -147,6 +184,7 @@ class _SignupPageState extends State<SignupPage> {
             ),
             _SignupField(
               id: 'username',
+              showErrors: _submitted,
               controller: _username,
               validator: SignupValidation.username,
               autofillHints: const [AutofillHints.newUsername],
@@ -157,6 +195,7 @@ class _SignupPageState extends State<SignupPage> {
             ),
             _SignupField(
               id: 'email',
+              showErrors: _submitted,
               controller: _email,
               validator: SignupValidation.email,
               autofillHints: const [AutofillHints.email],
@@ -168,6 +207,7 @@ class _SignupPageState extends State<SignupPage> {
             ),
             _SignupField(
               id: 'password',
+              showErrors: _submitted,
               controller: _password,
               validator: SignupValidation.password,
               onToggle: () => setState(() => _showPassword = !_showPassword),
@@ -180,6 +220,7 @@ class _SignupPageState extends State<SignupPage> {
             ),
             _SignupField(
               id: 'confirmation',
+              showErrors: _submitted,
               controller: _confirmation,
               validator: (value) =>
                   SignupValidation.confirmation(value, _password.text),
@@ -226,7 +267,9 @@ class _SignupPageState extends State<SignupPage> {
                     _acceptedTerms = value ?? false;
                     _showTermsError = !_acceptedTerms;
                   }),
-                  side: BorderSide(color: colors.muted),
+                  side: BorderSide(
+                    color: _showTermsError ? colors.error : colors.muted,
+                  ),
                 ),
                 Expanded(
                   child: TextButton(
@@ -319,6 +362,7 @@ class _SignupField extends StatelessWidget {
     required this.colors,
     this.keyboardType,
     this.obscure = false,
+    this.showErrors = false,
     this.controller,
     this.validator,
     this.autofillHints,
@@ -331,6 +375,7 @@ class _SignupField extends StatelessWidget {
   final AuthColors colors;
   final TextInputType? keyboardType;
   final bool obscure;
+  final bool showErrors;
   final TextEditingController? controller;
   final FormFieldValidator<String>? validator;
   final Iterable<String>? autofillHints;
@@ -339,6 +384,7 @@ class _SignupField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final invalid = showErrors && validator?.call(controller?.text) != null;
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Column(
@@ -384,7 +430,11 @@ class _SignupField extends StatelessWidget {
                 borderSide: BorderSide(color: colors.error, width: 1.5),
               ),
               hintStyle: TextStyle(color: colors.muted, fontSize: 13),
-              prefixIcon: Icon(icon, size: 18, color: colors.muted),
+              prefixIcon: Icon(
+                icon,
+                size: 18,
+                color: invalid ? colors.error : colors.muted,
+              ),
               suffixIcon: onToggle != null
                   ? IconButton(
                       onPressed: onToggle,
@@ -400,7 +450,7 @@ class _SignupField extends StatelessWidget {
                     )
                   : null,
               filled: true,
-              fillColor: colors.field,
+              fillColor: invalid ? colors.errorSurface : colors.field,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 12,
                 vertical: 14,
