@@ -199,17 +199,25 @@ void main() {
   });
 
   group('panduan dan unggah', () {
-    testWidgets('link panduan membuka dan menutup dialog', (tester) async {
+    testWidgets('link panduan membuka dan menutup halaman panduan', (tester) async {
       usePhoneScreen(tester);
       await tester.pumpWidget(directPage());
 
-      await tapText(tester, 'Panduan foto struk yang bisa dipindai');
-      expect(find.text('Panduan foto struk'), findsOneWidget); // judul dialog
-      expect(find.textContaining('maksimal 10 MB'), findsOneWidget);
+      expect(find.text('Panduan Foto Struk'), findsNothing);
 
-      await tester.tap(find.text('Tutup'));
+      // Tekan link panduan terlebih dahulu (sesuaikan teksnya dengan di scan_receipt.dart)
+      final guideLink = find.textContaining('Panduan', findRichText: true);
+      await tester.ensureVisible(guideLink);
+      await tester.tap(guideLink);
       await tester.pumpAndSettle();
-      expect(find.text('Panduan foto struk'), findsNothing);
+
+      expect(find.text('Panduan Foto Struk'), findsOneWidget);
+      expect(find.text('Tidak Dapat Dipindai dengan Benar'), findsOneWidget);
+
+      await tester.tap(find.text('‹ Kembali ke pindai'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Panduan Foto Struk'), findsNothing);
     });
 
     // Tes ini sengaja mengunci perilaku sementara. Saat OCR sudah tersambung,

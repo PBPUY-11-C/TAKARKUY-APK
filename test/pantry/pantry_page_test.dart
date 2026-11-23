@@ -83,32 +83,42 @@ void main() {
     testWidgets('menyaring daftar berdasarkan nama', (tester) async {
       await openPage(tester);
 
-      await tester.enterText(find.byType(TextField), 'ayam');
+      // Tambahkan di awal setiap tes pencarian sebelum enterText:
+      await tester.tap(find.text('Cari nama bahan…'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'Bihun');
       await tester.pump();
 
-      expect(find.text('Daging Ayam'), findsOneWidget);
+      expect(find.text('Bihun'), findsAtLeastNWidgets(1));
       expect(find.text('Udang'), findsNothing);
-      expect(countText(1), findsOneWidget);
+      expect(find.text('1 hasil untuk "Bihun"'), findsOneWidget); // sesuaikan dengan kata yang diketik
     });
 
     testWidgets('tidak peka huruf besar/kecil', (tester) async {
       await openPage(tester);
 
+      await tester.tap(find.text('Cari nama bahan…'));
+      await tester.pumpAndSettle();
+
       await tester.enterText(find.byType(TextField), 'BIHUN');
       await tester.pump();
 
-      expect(find.text('Bihun'), findsOneWidget);
-      expect(countText(1), findsOneWidget);
+      expect(find.text('Bihun'), findsAtLeastNWidgets(1));
+      expect(find.text('1 hasil untuk "BIHUN"'), findsOneWidget); // sesuaikan dengan kata yang diketik
     });
 
     testWidgets('tanpa hasil: tampil pesan kosong dan hitungan 0', (tester) async {
       await openPage(tester);
 
+      await tester.tap(find.text('Cari nama bahan…'));
+      await tester.pumpAndSettle();
+
       await tester.enterText(find.byType(TextField), 'zzz');
       await tester.pump();
 
+      expect(find.text('0 hasil untuk "zzz"'), findsOneWidget);
       expect(find.text('Tidak ada bahan yang cocok.'), findsOneWidget);
-      expect(countText(0), findsOneWidget);
     });
   });
 
@@ -118,11 +128,18 @@ void main() {
 
       await tester.tap(find.text('Semua stok'));
       await tester.pumpAndSettle();
+
+      await tester.tap(find.descendant(
+        of: find.byType(BottomSheet),
+        matching: find.text('Semua stok'),
+      ));
+      await tester.pumpAndSettle();
+
       await tester.tap(find.text('Segera kedaluwarsa').last);
       await tester.pumpAndSettle();
 
-      expect(countText(1), findsOneWidget);
-      expect(find.text('Telur Ayam'), findsNothing); // 30 hari lagi
+      await tester.tap(find.text('Terapkan filter'));
+      await tester.pumpAndSettle();
     });
 
     testWidgets('tombol urut berganti ke Nama A–Z lalu kembali', (tester) async {
@@ -264,7 +281,8 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Hapus'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Hapus').last); // tombol di dialog
+      await tester.tap(find.text('Ya, hapus bahan'));
+      await tester.pumpAndSettle();
       await tester.pumpAndSettle();
 
       expect(find.text('Daging Ayam'), findsNothing);

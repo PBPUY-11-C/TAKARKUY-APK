@@ -287,7 +287,7 @@ void main() {
   });
 
   group('hapus bahan', () {
-    testWidgets('batal pada dialog konfirmasi tidak menghapus dan tetap di halaman', (tester) async {
+    testWidgets('batal pada modal konfirmasi tidak menghapus dan tetap di halaman', (tester) async {
       usePhoneScreen(tester);
       Object? result = 'belum';
       await tester.pumpWidget(hostedPage((r) => result = r));
@@ -299,14 +299,13 @@ void main() {
       await tester.tap(deleteBtn);
       await tester.pumpAndSettle();
 
-      expect(find.text('Hapus bahan?'), findsOneWidget);
-      expect(find.text('"Tempe" akan dihapus dari stok.'), findsOneWidget);
+      expect(find.text('Hapus bahan dari Pantry?'), findsOneWidget);
 
-      final cancelDialogBtn = find.descendant(
-        of: find.byType(AlertDialog),
+      final cancelSheetBtn = find.descendant(
+        of: find.byType(BottomSheet),
         matching: find.text('Batal'),
       );
-      await tester.tap(cancelDialogBtn);
+      await tester.tap(cancelSheetBtn);
       await tester.pumpAndSettle();
 
       expect(find.text('Edit bahan'), findsOneWidget);
@@ -325,11 +324,7 @@ void main() {
       await tester.tap(deleteBtn);
       await tester.pumpAndSettle();
 
-      final confirmDialogBtn = find.descendant(
-        of: find.byType(AlertDialog),
-        matching: find.text('Hapus'),
-      );
-      await tester.tap(confirmDialogBtn);
+      await tester.tap(find.text('Ya, hapus bahan'));
       await tester.pumpAndSettle();
 
       expect(find.text('open'), findsOneWidget);
