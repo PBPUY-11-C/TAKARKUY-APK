@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:takarkuy_apk/recipe_book/screens/recipe_list_page.dart';
 
-import 'package:takarkuy_apk/pantry/screens/pantry_page.dart';
+import 'package:takarkuy_apk/pantry/pantry_page.dart';
 import 'package:takarkuy_apk/planner/planner_page.dart';
 
 const Color primaryGreen = Color(0xFF007452);
