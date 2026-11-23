@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/delete_modal.dart';
 
 // Form Edit bahan
 class EditItemPage extends StatefulWidget {
@@ -111,18 +112,13 @@ class _EditItemPageState extends State<EditItemPage> {
   }
 
   Future<void> _confirmDelete() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text('Hapus bahan?', style: TextStyle(fontFamily: 'Inter', fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w600, color: const Color(0xFF292929), leadingDistribution: TextLeadingDistribution.even)),
-        content: Text('"${widget.name}" akan dihapus dari stok.', style: TextStyle(fontFamily: 'Inter', fontSize: 14, height: 20 / 14, fontWeight: FontWeight.w400, color: const Color(0xFF292929), leadingDistribution: TextLeadingDistribution.even)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Batal')),
-          TextButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Hapus')),
-        ],
-      ),
+    final confirmed = await showDeleteItemSheet(
+      context,
+      itemName: widget.name,
     );
-    if (confirmed == true && mounted) Navigator.pop(context, {'action': 'delete'});
+    if (confirmed == true && mounted) {
+      Navigator.pop(context, {'action': 'delete'});
+    }
   }
 
   @override

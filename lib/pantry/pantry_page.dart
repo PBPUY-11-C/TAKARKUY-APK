@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
-import 'screens/scan_receipt.dart';
 import 'screens/edit_item.dart';
 import 'screens/input_manual.dart';
+import 'screens/scan_receipt.dart';
+
+import 'widgets/filter_modal.dart';
 import 'widgets/input_modal.dart';
 import 'widgets/pantry_card.dart';
+import 'widgets/search_modal.dart';
 
 /// Halaman Stok Dapur: tombol Tambah bahan, pencarian, filter, urutan, dan daftar kartu stok.
 class PantryPage extends StatefulWidget {
@@ -19,7 +22,7 @@ class PantryPage extends StatefulWidget {
 }
 
 class _PantryPageState extends State<PantryPage> {
-  String _query = '';
+  final String _query = '';
   StockFilter _filter = StockFilter.all;
   StockSort _sort = StockSort.expiry;
   String? _expandedId; // id kartu yang sedang terbuka (hanya satu)
@@ -29,21 +32,28 @@ class _PantryPageState extends State<PantryPage> {
   // Salinan yang bisa diubah (edit / hapus), bukan list dari luar.
   late final List<PantryItem> _items = [...(widget.items ?? sampleItems(_today))];
 
+  // helper untuk _visible dan countFor
+  bool _matchesFilter(PantryItem it, StockFilter filter, DateTime today) {
+    final days = it.daysLeft(today);
+    switch (filter) {
+      case StockFilter.all:
+        return true;
+      case StockFilter.expiringSoon:
+        return days != null && days >= 0 && days <= 7;
+      case StockFilter.expired:
+        return days != null && days < 0;
+      case StockFilter.noDate:
+        return days == null;
+    }
+  }
+
   /// Daftar yang tampil: sudah dicari, difilter, dan diurutkan.
   List<PantryItem> get _visible {
     final q = _query.trim().toLowerCase();
     final today = _today;
     final rows = _items.where((it) {
       if (q.isNotEmpty && !it.name.toLowerCase().contains(q)) return false;
-      final days = it.daysLeft(today);
-      switch (_filter) {
-        case StockFilter.all:
-          return true;
-        case StockFilter.expiringSoon:
-          return days != null && days <= 7;
-        case StockFilter.noDate:
-          return days == null;
-      }
+      return _matchesFilter(it, _filter, today);
     }).toList();
 
     int byName(PantryItem a, PantryItem b) =>
@@ -173,56 +183,87 @@ class _PantryPageState extends State<PantryPage> {
       );
 
   // --- Cari bahan: tinggi 48, putih, garis #A6A6A6 -------------------------
-  Widget _searchField() => Container(
-        constraints: const BoxConstraints(minHeight: 48),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFFFFF),
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: const Color(0xFFA6A6A6)),
+  Widget _searchField() => Material(
+      color: const Color(0xFFFFFFFF),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(6),
+        side: const BorderSide(color: Color(0xFFA6A6A6)),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(6),
+        onTap: () => showSearchStockModal(
+          context,
+          items: _items,
+          today: _today,
+          onEdit: _edit,
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        alignment: Alignment.center,
-        child: TextField(
-          onChanged: (v) => setState(() => _query = v),
-          style: TextStyle(fontFamily: 'Inter', fontSize: 14, height: 20 / 14, fontWeight: FontWeight.w400, color: const Color(0xFF292929), leadingDistribution: TextLeadingDistribution.even),
-          cursorColor: const Color(0xFF292929),
-          decoration: InputDecoration(
-            isCollapsed: true,
-            border: InputBorder.none,
-            hintText: 'Cari nama bahan…',
-            hintStyle: TextStyle(fontFamily: 'Inter', fontSize: 14, height: 20 / 14, fontWeight: FontWeight.w400, color: const Color(0xFF616161), leadingDistribution: TextLeadingDistribution.even),
-            contentPadding: const EdgeInsets.symmetric(vertical: 14),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 48),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          alignment: Alignment.centerLeft,
+          child: const Text(
+            'Cari nama bahan…',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 14,
+              height: 20 / 14,
+              fontWeight: FontWeight.w400,
+              color: Color(0xFF616161),
+              leadingDistribution: TextLeadingDistribution.even,
+            ),
           ),
         ),
-      );
+      ),
+    );
 
   // --- Chip dropdown "Semua stok": #F0F0F0, radius 22 ----------------------
-  Widget _filterChip() => PopupMenuButton<StockFilter>(
-        tooltip: 'Filter stok',
-        initialValue: _filter,
-        onSelected: (f) => setState(() => _filter = f),
-        itemBuilder: (_) => [
-          for (final f in StockFilter.values)
-            PopupMenuItem(value: f, child: Text(f.label, style: TextStyle(fontFamily: 'Inter', fontSize: 14, height: 20 / 14, fontWeight: FontWeight.w400, color: const Color(0xFF292929), leadingDistribution: TextLeadingDistribution.even))),
-        ],
+  Widget _filterChip() => Material(
+      color: const Color(0xFFF0F0F0),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
+        side: const BorderSide(color: Color(0xFFA6A6A6)),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+        onTap: () async {
+          final picked = await showExpiryFilterSheet(
+            context,
+            currentFilter: _filter,
+            countFor: (f) =>
+                _items.where((it) => _matchesFilter(it, f, _today)).length,
+          );
+          if (picked != null && mounted) {
+            setState(() => _filter = picked);
+          }
+        },
         child: Container(
           height: 46,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF0F0F0),
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: const Color(0xFFA6A6A6)),
-          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(_filter.label, style: TextStyle(fontFamily: 'Inter', fontSize: 14, height: 20 / 14, fontWeight: FontWeight.w500, color: const Color(0xFF292929), leadingDistribution: TextLeadingDistribution.even)),
+              Flexible(
+                child: Text(
+                  _filter.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    height: 20 / 14,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF292929),
+                    leadingDistribution: TextLeadingDistribution.even,
+                  ),
+                ),
+              ),
               const SizedBox(width: 8),
               const Icon(Icons.keyboard_arrow_down, size: 16, color: Color(0xFF292929)),
             ],
           ),
         ),
-      );
+      ),
+    );
 
   // --- Tombol urutan: secondary, tinggi 48 ---------------------------------
   Widget _sortButton() => SizedBox(
@@ -284,7 +325,8 @@ Widget _button(
 enum StockFilter {
   all('Semua stok'),
   expiringSoon('Segera kedaluwarsa'),
-  noDate('Tanggal belum diketahui');
+  noDate('Tanggal belum diketahui'),
+  expired('Kedaluwarsa');
 
   const StockFilter(this.label);
   final String label;
