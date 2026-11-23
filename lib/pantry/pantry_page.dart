@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'screens/scan_receipt.dart';
+import 'screens/edit_item.dart';
 import 'screens/input_manual.dart';
 import 'widgets/input_modal.dart';
 import 'widgets/pantry_card.dart';
@@ -25,7 +26,8 @@ class _PantryPageState extends State<PantryPage> {
 
   DateTime get _today => widget._today ?? DateTime.now();
 
-  late final List<PantryItem> _items = widget.items ?? sampleItems(_today);
+  // Salinan yang bisa diubah (edit / hapus), bukan list dari luar.
+  late final List<PantryItem> _items = [...(widget.items ?? sampleItems(_today))];
 
   /// Daftar yang tampil: sudah dicari, difilter, dan diurutkan.
   List<PantryItem> get _visible {
@@ -100,7 +102,7 @@ class _PantryPageState extends State<PantryPage> {
                   expanded: _expandedId == it.id,
                   onToggle: () => setState(
                       () => _expandedId = _expandedId == it.id ? null : it.id),
-                  onEdit: () => _toast('Ubah ${it.name}'),
+                  onEdit: () => _edit(it),
                 ),
                 const SizedBox(height: 16),
               ],
@@ -108,6 +110,48 @@ class _PantryPageState extends State<PantryPage> {
         ),
       ),
     );
+  }
+
+  /// Buka form Edit bahan; terapkan hasilnya (simpan atau hapus) ke daftar.
+  Future<void> _edit(PantryItem it) async {
+    final result = await Navigator.push<Map<String, dynamic>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditItemPage(
+          name: it.name,
+          quantity: it.quantity,
+          unit: it.unit,
+          category: it.category,
+          location: it.location,
+          expiresOn: it.expiresOn,
+        ),
+      ),
+    );
+    if (result == null || !mounted) return; // Batal / Kembali
+
+    if (result['action'] == 'delete') {
+      setState(() {
+        _items.removeWhere((e) => e.id == it.id);
+        if (_expandedId == it.id) _expandedId = null;
+      });
+      _toast('${it.name} dihapus');
+      return;
+    }
+
+    final updated = it.edited(
+      name: result['name'] as String,
+      quantity: (result['quantity'] as num).toDouble(),
+      unit: result['unit'] as String,
+      category: result['category'] as String,
+      location: result['location'] as String,
+      expiresOn: result['expiresOn'] as DateTime?,
+    );
+    setState(() {
+      final i = _items.indexWhere((e) => e.id == it.id);
+      if (i != -1) _items[i] = updated;
+    });
+    _toast('${updated.name} diperbarui');
+    // TODO: kirim perubahan ke API (PATCH /pantry/items/<id>/).
   }
 
   // --- Tombol "+ Tambah bahan" -> modal -> form scan / manual -----------------
@@ -274,6 +318,25 @@ class PantryItem {
   final String category;
   final String location;
   final DateTime? expiresOn; // null = tanggal belum diketahui
+
+  /// Salinan dengan nilai baru (expiresOn null = tanggal dihapus).
+  PantryItem edited({
+    required String name,
+    required double quantity,
+    required String unit,
+    required String category,
+    required String location,
+    required DateTime? expiresOn,
+  }) =>
+      PantryItem(
+        id: id,
+        name: name,
+        quantity: quantity,
+        unit: unit,
+        category: category,
+        location: location,
+        expiresOn: expiresOn,
+      );
 
   static const _months = [
     'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
