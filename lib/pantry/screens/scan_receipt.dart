@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:takarkuy_apk/pantry/screens/receipt_guide.dart';
 
 /// Layar "Pindai struk" (Tambah bahan lewat foto struk).
 /// Saat disimpan, layar menutup dan mengembalikan Map:
@@ -73,19 +74,9 @@ class _ScanReceiptPage extends State<ScanReceiptPage> {
   }
 
   void _showGuide() {
-    showDialog<void>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text('Panduan foto struk', style: TextStyle(fontFamily: 'Inter', fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w600, color: const Color(0xFF292929), leadingDistribution: TextLeadingDistribution.even)),
-        content: Text(
-          '• Pastikan seluruh struk terlihat dan tidak terpotong.\n'
-          '• Foto di tempat terang, tanpa bayangan dan tidak buram.\n'
-          '• Letakkan struk rata di permukaan datar.\n'
-          '• Format JPG, PNG, atau WebP, maksimal 10 MB.',
-          style: TextStyle(fontFamily: 'Inter', fontSize: 14, height: 20 / 14, fontWeight: FontWeight.w400, color: const Color(0xFF292929), leadingDistribution: TextLeadingDistribution.even),
-        ),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Tutup'))],
-      ),
+    Navigator.push<void>(
+      context,
+      MaterialPageRoute(builder: (_) => const ReceiptGuidePage()),
     );
   }
 
