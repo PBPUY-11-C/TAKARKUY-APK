@@ -117,7 +117,84 @@ Aplikasi Flutter  ──(HTTP request)──▶  Django REST Framework (web di P
 4. Aplikasi mengubah JSON tersebut menjadi objek Dart (model) dan menampilkannya di layar.
 5. Perubahan dari mobile langsung tersimpan di database yang sama, sehingga ikut terlihat di versi web, begitu juga sebaliknya.
 
-Daftar endpoint API per modul akan ditambahkan di bagian ini seiring pengerjaan.
+### Daftar Endpoint API
+
+Dokumentasi lengkap yang dibuat otomatis dari kode tersedia di [Swagger](https://alfredo-nathaniel-takarkuy.pws.cs.ui.ac.id/api/docs/) dan [Redoc](https://alfredo-nathaniel-takarkuy.pws.cs.ui.ac.id/api/redoc/). Semua endpoint kecuali login, logout, dan daftar wajib login, hanya mengembalikan data milik pengguna sendiri, dan hanya memakai GET serta POST karena `pbp_django_auth` hanya mendukung dua method itu. Body POST selalu JSON, kecuali login yang juga menerima form. Setiap error berbentuk `{"error": "pesan", "code": "kode"}`, ditambah `fields` untuk error per kolom.
+
+| Modul | Method | Endpoint | Fungsi |
+| --- | --- | --- | --- |
+| 1 Planner | GET, POST | `/api/planner/plans/` | Daftar rencana; buat rencana (draft) dari budget |
+| | GET | `/api/planner/plans/<id>/` | Detail: jadwal, daftar belanja, gizi |
+| | POST | `/api/planner/plans/<id>/save/` | Simpan draft atau ubah judul dan tanggal |
+| | POST | `/api/planner/plans/<id>/delete/` | Hapus rencana |
+| 2 Pantry | GET, POST | `/api/pantry/items/` | Daftar stok (filter kedaluwarsa); tambah bahan |
+| | GET | `/api/pantry/items/<id>/` | Detail bahan |
+| | POST | `/api/pantry/items/<id>/update/` | Ubah bahan |
+| | POST | `/api/pantry/items/<id>/delete/` | Buang bahan |
+| | GET | `/api/pantry/items/<id>/movements/` | Riwayat perubahan stok |
+| | GET | `/api/pantry/recipes/` | Ide menu dari stok |
+| | POST | `/api/pantry/receipt/scan/` | Baca struk belanja |
+| 3 Akun | POST | `/api/auth/login/`, `/api/auth/logout/`, `/api/auth/register/` | Masuk, keluar, daftar |
+| | GET | `/api/auth/profile/` | Profil dan preferensi makanan |
+| | POST | `/api/auth/profile/update/`, `/api/auth/preferences/update/`, `/api/auth/password/` | Ubah profil, preferensi, kata sandi |
+| 4 Resep | GET | `/api/recipes/`, `/api/recipes/<kode>/` | Cari resep; detail resep |
+| | GET, POST | `/api/recipes/favorites/` | Daftar favorit; tambah atau hapus favorit |
+| | POST | `/api/recipes/notes/` | Simpan atau hapus catatan pribadi |
+| | GET | `/api/recipes/history/` | Riwayat masak |
+| | POST | `/api/recipes/cook/preview/`, `/api/recipes/cook/` | Pratinjau pemakaian stok; catat "Sudah Masak" |
+| 5 Dashboard | GET | `/api/dashboard/summary/` | Ringkasan Dashboard |
+| | GET, POST | `/api/dashboard/recipes/` | Daftar dan buat Resep Saya |
+| | GET | `/api/dashboard/recipes/<id>/` | Detail Resep Saya |
+| | POST | `/api/dashboard/recipes/<id>/update/`, `/api/dashboard/recipes/<id>/delete/` | Ubah dan hapus Resep Saya |
+| | GET | `/api/dashboard/markets/` | Pasar terdekat (`lat` dan `lon`) |
+
+Untuk memastikan semua endpoint hidup, jalankan dari folder proyek web: `python -m scripts.cek_api https://alfredo-nathaniel-takarkuy.pws.cs.ui.ac.id`. Skrip login dengan akunmu (kata sandi diketik saat berjalan), memanggil satu endpoint dari tiap modul, lalu menampilkan status masing-masing.
+
+## Arsitektur dan Panduan Menyambungkan Modul
+
+```text
+lib/
+  main.dart              akar aplikasi: sesi login, ApiClient, tema, router
+  app/                   kerangka aplikasi (halaman awal)
+  core/
+    api/                 ApiConfig (alamat server) dan ApiClient (pintu ke API)
+    router/              AppRoutes, go_router, dan transisi halaman
+    theme/               AppColors dan AppTheme (sama dengan web)
+    utils/               Debouncer dan optimistic()
+    widgets/             LeftDrawer, AsyncStateView, showAppSnackBar
+  features/<modul>/      satu folder per modul: data/ (model, repository), providers/, screens/, widgets/
+test/                    mengikuti struktur lib/; test/support/ berisi server palsu untuk tes
+```
+
+Aturan bersama supaya aplikasi terasa satu produk:
+
+- **Warna:** pakai `AppColors` (mis. `AppColors.green`, `AppColors.muted`), bukan `Color(0x...)`. AppBar, tombol, input, kartu, dan SnackBar sudah otomatis mengikuti `AppTheme`.
+- **Navigasi:** pindah halaman dengan `context.push(AppRoutes.pantry)`. Rute baru didaftarkan di `lib/core/router/app_router.dart` supaya ikut mendapat transisi bersama.
+- **API:** ambil `ApiClient` dengan `context.read<ApiClient>()`, lalu `await api.get('/api/...')` atau `await api.post('/api/...', {...})`. Setiap kegagalan (error server, koneksi putus, jawaban rusak) dilempar sebagai `ApiException` dengan pesan berbahasa Indonesia yang siap ditampilkan.
+- **State:** simpan data modul di `ChangeNotifier` (Provider) dengan status memuat, berhasil, dan gagal, lalu tampilkan lewat `AsyncStateView` (lengkap dengan tombol "Coba lagi").
+- **Interaksi:** pencarian memakai `Debouncer`, hapus atau ubah yang langsung terlihat memakai `optimistic()` dengan tombol "Batal" di `showAppSnackBar`.
+
+Contoh singkat memuat data di sebuah halaman:
+
+```dart
+final api = context.read<ApiClient>();
+try {
+  final rows = await api.get('/api/planner/plans/') as List;
+  plans = rows.map((row) => BudgetPlan.fromJson(row)).toList();
+} on ApiException catch (error) {
+  showAppSnackBar(context, error.message, error: true);
+}
+```
+
+**Tes tanpa internet:** jalankan aplikasi dengan server palsu, lalu periksa tampilan dan panggilan yang terjadi.
+
+```dart
+final request = FakeCookieRequest({'GET /api/planner/plans/': []});
+await tester.pumpWidget(TakarKuyApp(request: request));
+expect(request.calls.single.path, '/api/planner/plans/');
+```
+
+**Alur kerja tiap anggota:** satu branch per modul (`modul-<nama>`), commit `test:` dulu lalu `feat:`/`fix:`, `flutter analyze` dan `flutter test` hijau sebelum push, lalu pull request ke `main` yang wajib di-review satu anggota lain dan diperiksa CodeRabbit.
 
 ## Menjalankan Secara Lokal
 
@@ -134,3 +211,11 @@ flutter run            # jalankan di perangkat yang tersedia
 ```
 
 Cek kode dan jalankan tes dengan `flutter analyze` dan `flutter test`. Untuk membuat APK: `flutter build apk --release` (hasilnya di `build/app/outputs/flutter-apk/`).
+
+Secara bawaan aplikasi memakai server PWS. Untuk mencoba dengan Django di laptop, jalankan server web (`python manage.py runserver`) lalu:
+
+```bash
+flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:8000
+```
+
+Django sudah mengizinkan Flutter dari `localhost` memanggil `/api/` (CORS), jadi login dan data bisa dicoba langsung di Chrome.
