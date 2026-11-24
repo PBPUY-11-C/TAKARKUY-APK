@@ -1,30 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
-import 'package:takarkuy_apk/features/akun/screens/akun_page.dart';
-import 'package:takarkuy_apk/features/dashboard/screens/dashboard_screen.dart';
-import 'package:takarkuy_apk/features/pantry/pantry_page.dart';
-import 'package:takarkuy_apk/features/planner/planner_page.dart';
-import 'package:takarkuy_apk/features/recipe_book/screens/recipe_list_page.dart';
+import 'package:takarkuy_apk/core/router/app_router.dart';
+import 'package:takarkuy_apk/core/theme/app_colors.dart';
 import 'package:takarkuy_apk/core/widgets/left_drawer.dart';
 
-/// Warna dari design system web (static/takarkuy/base.css).
-class TakarKuyColors {
-  static const green = Color(0xFF0F3D2E);
-  static const lime = Color(0xFFD4F45A);
-  static const line = Color(0xFFB8DCC7);
-  static const ink = Color(0xFF10251C);
-  static const muted = Color(0xFF5A6F64);
-  static const canvas = Color(0xFFF2F8F4);
-}
-
-/// Satu tombol modul di halaman awal beserta halaman yang dibukanya.
+/// Satu tombol modul di halaman awal beserta rute halaman yang dibukanya.
 class ModuleItem {
-  const ModuleItem(this.name, this.description, this.icon, this.page);
+  const ModuleItem(this.name, this.description, this.icon, this.route);
 
   final String name;
   final String description;
   final IconData icon;
-  final Widget page;
+  final String route;
 }
 
 /// Halaman awal aplikasi: header TAKARKUY dan kartu menuju kelima modul.
@@ -32,12 +20,12 @@ class MenuPage extends StatelessWidget {
   const MenuPage({super.key});
 
   static const modules = [
-    ModuleItem('Planner', 'Susun menu sesuai budget', Icons.calculate_outlined, PlannerPage()),
-    ModuleItem('Pantry', 'Catat stok bahan di dapur', Icons.kitchen_outlined, PantryPage()),
-    ModuleItem('Resep', 'Cari resep dan mulai masak', Icons.menu_book_outlined, RecipeListPage()),
+    ModuleItem('Planner', 'Susun menu sesuai budget', Icons.calculate_outlined, AppRoutes.planner),
+    ModuleItem('Pantry', 'Catat stok bahan di dapur', Icons.kitchen_outlined, AppRoutes.pantry),
+    ModuleItem('Resep', 'Cari resep dan mulai masak', Icons.menu_book_outlined, AppRoutes.resep),
     ModuleItem('Dashboard', 'Ringkasan menu hari ini', Icons.space_dashboard_outlined,
-        DashboardScreen()),
-    ModuleItem('Akun', 'Masuk atau daftar akun', Icons.person_outline, AkunPage()),
+        AppRoutes.dashboard),
+    ModuleItem('Akun', 'Masuk atau daftar akun', Icons.person_outline, AppRoutes.login),
   ];
 
   @override
@@ -78,7 +66,7 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: TakarKuyColors.green,
+        color: AppColors.green,
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
       ),
       clipBehavior: Clip.antiAlias,
@@ -143,7 +131,7 @@ class _Blob extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: TakarKuyColors.lime.withValues(alpha: opacity),
+        color: AppColors.lime.withValues(alpha: opacity),
         shape: BoxShape.circle,
       ),
     );
@@ -164,7 +152,7 @@ class _ModuleCardState extends State<ModuleCard> {
   bool _pressed = false;
 
   void _open() {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => widget.item.page));
+    context.push(widget.item.route);
   }
 
   @override
@@ -178,7 +166,7 @@ class _ModuleCardState extends State<ModuleCard> {
         color: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
-          side: const BorderSide(color: TakarKuyColors.line),
+          side: const BorderSide(color: AppColors.line),
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -193,16 +181,16 @@ class _ModuleCardState extends State<ModuleCard> {
                   width: 52,
                   height: 52,
                   decoration: BoxDecoration(
-                    color: TakarKuyColors.lime,
+                    color: AppColors.lime,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Icon(item.icon, color: TakarKuyColors.green, size: 28),
+                  child: Icon(item.icon, color: AppColors.green, size: 28),
                 ),
                 const Spacer(),
                 Text(
                   item.name,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: TakarKuyColors.ink,
+                        color: AppColors.ink,
                         fontWeight: FontWeight.w700,
                       ),
                 ),
@@ -214,7 +202,7 @@ class _ModuleCardState extends State<ModuleCard> {
                   style: Theme.of(context)
                       .textTheme
                       .bodySmall
-                      ?.copyWith(color: TakarKuyColors.muted),
+                      ?.copyWith(color: AppColors.muted),
                 ),
               ],
             ),

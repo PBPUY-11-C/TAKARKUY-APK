@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'package:takarkuy_apk/core/router/app_navigation.dart';
+import 'package:takarkuy_apk/core/router/app_router.dart';
+
 /// Halaman masuk Modul 3, dikembangkan dari kerangka Akun yang sudah ada.
 class AkunPage extends StatelessWidget {
   const AkunPage({super.key});
@@ -15,10 +18,10 @@ class AkunPage extends StatelessWidget {
             children: [
               const Text('Halaman Login'),
               TextButton(
-                onPressed: () => Navigator.pushNamed(
+                onPressed: () => openRoute(
                   context,
-                  '/signup',
-                  arguments: const {'fromLogin': true},
+                  AppRoutes.signup,
+                  extra: const {'fromLogin': true},
                 ),
                 child: const Text('Buka halaman daftar'),
               ),

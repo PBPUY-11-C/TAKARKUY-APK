@@ -1,37 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:takarkuy_apk/features/akun/screens/akun_page.dart';
-import 'package:takarkuy_apk/features/dashboard/screens/dashboard_screen.dart';
-import 'package:takarkuy_apk/features/pantry/pantry_page.dart';
-import 'package:takarkuy_apk/features/planner/planner_page.dart';
-import 'package:takarkuy_apk/features/recipe_book/screens/recipe_list_page.dart';
+import 'package:go_router/go_router.dart';
+import 'package:takarkuy_apk/core/router/app_router.dart';
+import 'package:takarkuy_apk/core/theme/app_colors.dart';
 
 /// Drawer navigasi bersama: kembali ke halaman awal atau membuka salah satu dari lima modul.
 class LeftDrawer extends StatelessWidget {
   const LeftDrawer({super.key});
 
-  static const Color darkGreen = Color(0xFF1B4332);
-
-  /// Menutup drawer lalu membuka halaman modul di atas halaman sekarang.
-  static void _open(BuildContext context, Widget page) {
-    Navigator.pop(context);
-    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
-  }
+  static const _modules = <(IconData, String, String)>[
+    (Icons.calendar_month_outlined, 'Smart Meal Planner', AppRoutes.planner),
+    (Icons.kitchen_outlined, 'Smart Pantry', AppRoutes.pantry),
+    (Icons.person_outline, 'Akun & Preferensi', AppRoutes.login),
+    (Icons.menu_book_outlined, 'Buku Resep & Masak', AppRoutes.resep),
+    (Icons.dashboard_outlined, 'Dashboard & Market', AppRoutes.dashboard),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    final modules = <(IconData, String, Widget)>[
-      (Icons.calendar_month_outlined, 'Smart Meal Planner', const PlannerPage()),
-      (Icons.kitchen_outlined, 'Smart Pantry', const PantryPage()),
-      (Icons.person_outline, 'Akun & Preferensi', const AkunPage()),
-      (Icons.menu_book_outlined, 'Buku Resep & Masak', const RecipeListPage()),
-      (Icons.dashboard_outlined, 'Dashboard & Market', const DashboardScreen()),
-    ];
     return Drawer(
       child: ListView(
         children: [
           const DrawerHeader(
             decoration: BoxDecoration(
-              color: darkGreen,
+              color: AppColors.green,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -60,16 +51,19 @@ class LeftDrawer extends StatelessWidget {
             leading: const Icon(Icons.home_outlined),
             title: const Text('Halaman Utama'),
             onTap: () {
-              Navigator.pop(context);
-              Navigator.popUntil(context, (route) => route.isFirst);
+              Scaffold.of(context).closeDrawer();
+              context.go(AppRoutes.home);
             },
           ),
           const Divider(),
-          for (final (icon, title, page) in modules)
+          for (final (icon, title, route) in _modules)
             ListTile(
-              leading: Icon(icon, color: darkGreen),
+              leading: Icon(icon, color: AppColors.green),
               title: Text(title),
-              onTap: () => _open(context, page),
+              onTap: () {
+                Scaffold.of(context).closeDrawer();
+                context.push(route);
+              },
             ),
         ],
       ),

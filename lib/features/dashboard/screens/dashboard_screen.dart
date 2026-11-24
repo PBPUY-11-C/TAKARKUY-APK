@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:takarkuy_apk/core/router/app_navigation.dart';
+import 'package:takarkuy_apk/core/router/app_router.dart';
 import 'package:takarkuy_apk/features/recipe_book/screens/recipe_list_page.dart';
 
 import 'package:takarkuy_apk/features/pantry/pantry_page.dart';
@@ -391,7 +393,7 @@ class _BrandHeader extends StatelessWidget {
         const Spacer(),
         IconButton(
           tooltip: 'MasukKuy',
-          onPressed: () => Navigator.pushNamed(context, '/login'),
+          onPressed: () => openRoute(context, AppRoutes.login),
           icon: const Icon(Icons.person_outline, color: darkGreen),
         ),
       ],

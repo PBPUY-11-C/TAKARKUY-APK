@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'package:takarkuy_apk/core/router/app_navigation.dart';
+import 'package:takarkuy_apk/core/router/app_router.dart';
+
 import '../signup_validation.dart';
 
 class SignupPage extends StatefulWidget {
@@ -70,7 +73,7 @@ class _SignupPageState extends State<SignupPage> {
         Navigator.canPop(context)) {
       Navigator.pop(context);
     } else {
-      Navigator.pushReplacementNamed(context, '/login');
+      replaceRoute(context, AppRoutes.login);
     }
   }
 
