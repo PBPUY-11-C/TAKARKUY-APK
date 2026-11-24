@@ -1,12 +1,13 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:takarkuy_apk/dashboard/screens/dashboard_screen.dart';
+import 'package:takarkuy_apk/main.dart';
 
 void main() {
-  testWidgets('TAKARKUY dashboard loads successfully',
-      (WidgetTester tester) async {
+  testWidgets('TAKARKUY dashboard loads successfully', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(const MaterialApp(home: DashboardScreen()));
 
     // Memastikan aplikasi berhasil dijalankan.
@@ -22,27 +23,38 @@ void main() {
     expect(navigationBar, findsOneWidget);
 
     expect(
-      find.descendant(
-        of: navigationBar,
-        matching: find.text('Dashboard'),
-      ),
+      find.descendant(of: navigationBar, matching: find.text('Dashboard')),
       findsOneWidget,
     );
 
     expect(
-      find.descendant(
-        of: navigationBar,
-        matching: find.text('Resep Saya'),
-      ),
+      find.descendant(of: navigationBar, matching: find.text('Resep Saya')),
       findsOneWidget,
     );
 
     expect(
-      find.descendant(
-        of: navigationBar,
-        matching: find.text('Market'),
-      ),
+      find.descendant(of: navigationBar, matching: find.text('Market')),
       findsOneWidget,
     );
+  });
+
+  testWidgets('Navigasi dashboard, login dan daftar', (tester) async {
+    await tester.pumpWidget(const TakarKuyApp());
+    await tester.tap(find.text('Dashboard'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('MasukKuy'));
+    await tester.pumpAndSettle();
+    expect(find.text('Halaman Login'), findsOneWidget);
+
+    await tester.tap(find.text('Buka halaman daftar'));
+    await tester.pumpAndSettle();
+    expect(find.text('Daftar Akun'), findsOneWidget);
+    await tester.tap(find.text('Kembali'));
+    await tester.pumpAndSettle();
+    expect(find.text('Halaman Login'), findsOneWidget);
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.text('Pintasan Modul'), findsOneWidget);
   });
 }

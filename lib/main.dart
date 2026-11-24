@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'akun/screens/akun_page.dart';
+import 'akun/screens/signup_page.dart';
+
 import 'package:takarkuy_apk/screens/menu.dart';
 
 void main() {
@@ -23,6 +26,10 @@ class TakarKuyApp extends StatelessWidget {
         scaffoldBackgroundColor: TakarKuyColors.canvas,
       ),
       home: const MenuPage(),
+      routes: {
+        '/login': (_) => const AkunPage(),
+        '/signup': (_) => const SignupPage(),
+      },
     );
   }
 }
