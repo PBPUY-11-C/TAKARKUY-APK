@@ -388,6 +388,12 @@ class _BrandHeader extends StatelessWidget {
             letterSpacing: 0.2,
           ),
         ),
+        const Spacer(),
+        IconButton(
+          tooltip: 'MasukKuy',
+          onPressed: () => Navigator.pushNamed(context, '/login'),
+          icon: const Icon(Icons.person_outline, color: darkGreen),
+        ),
       ],
     );
   }
