@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import 'akun/screens/akun_page.dart';
-import 'akun/screens/signup_page.dart';
+import 'package:takarkuy_apk/features/akun/screens/akun_page.dart';
+import 'package:takarkuy_apk/features/akun/screens/signup_page.dart';
 
-import 'package:takarkuy_apk/screens/menu.dart';
+import 'package:takarkuy_apk/app/menu_page.dart';
 
 void main() {
   runApp(const TakarKuyApp());
