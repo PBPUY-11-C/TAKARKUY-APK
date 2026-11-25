@@ -38,11 +38,11 @@ void main() {
     );
   });
 
-  testWidgets('Navigasi dashboard, login dan daftar', (tester) async {
+  testWidgets('dashboard guest dialihkan ke login dan dapat membuka daftar', (
+    tester,
+  ) async {
     await tester.pumpWidget(const TakarKuyApp());
     await tester.tap(find.text('Dashboard'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('MasukKuy'));
     await tester.pumpAndSettle();
     expect(find.text('Selamat Datang'), findsOneWidget);
 

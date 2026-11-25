@@ -11,7 +11,8 @@ import 'package:takarkuy_apk/app/menu_page.dart';
 
 void main() {
   setUp(() {
-    final view = TestWidgetsFlutterBinding.instance.platformDispatcher.views.first;
+    final view =
+        TestWidgetsFlutterBinding.instance.platformDispatcher.views.first;
     view.physicalSize = const Size(1080, 2400);
     view.devicePixelRatio = 3;
   });
@@ -34,7 +35,11 @@ void main() {
 
   for (final entry in destinations.entries) {
     testWidgets('drawer "${entry.key}" membuka halamannya', (tester) async {
-      await tester.pumpWidget(const TakarKuyApp());
+      await tester.pumpWidget(
+        TakarKuyApp(
+          initialToken: entry.key == 'Akun & Preferensi' ? null : 'test-token',
+        ),
+      );
       await openDrawer(tester);
       await tester.tap(find.text(entry.key));
       await tester.pumpAndSettle();
@@ -44,7 +49,7 @@ void main() {
   }
 
   testWidgets('drawer "Halaman Utama" kembali ke halaman awal', (tester) async {
-    await tester.pumpWidget(const TakarKuyApp());
+    await tester.pumpWidget(const TakarKuyApp(initialToken: 'test-token'));
     await openDrawer(tester);
     await tester.tap(find.text('Buku Resep & Masak'));
     await tester.pumpAndSettle();

@@ -55,10 +55,8 @@ void main() {
         await fillLogin(tester, 'identifier', identifier);
         await fillLogin(tester, 'password', 'lama');
         await submitLogin(tester);
-        expect(find.text('Login belum tersedia'), findsOneWidget);
+        expect(find.text('Layanan akun belum tersedia.'), findsOneWidget);
         expect(find.text('Berhasil masuk'), findsNothing);
-        await tester.tap(find.text('Mengerti'));
-        await tester.pumpAndSettle();
         expect(find.text(identifier), findsOneWidget);
       },
     );

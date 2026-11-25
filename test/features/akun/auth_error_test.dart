@@ -99,7 +99,7 @@ void main() {
     expect(find.text('Isi kata sandi.'), findsNothing);
     expect(input(tester, 'login-identifier').controller!.text, 'attar_rais');
     await submitLogin(tester);
-    expect(find.text('Login belum tersedia'), findsOneWidget);
+    expect(find.text('Layanan akun belum tersedia.'), findsOneWidget);
   });
 
   testWidgets(

@@ -96,7 +96,7 @@ void main() {
   );
 
   testWidgets(
-    'submit valid memberi informasi tanpa mengklaim akun telah dibuat',
+    'submit valid tanpa provider menjelaskan layanan akun belum tersedia',
     (tester) async {
       await tester.pumpWidget(const MaterialApp(home: SignupPage()));
       await fillValidForm(tester);
@@ -105,10 +105,8 @@ void main() {
       await tester.tap(find.byType(Checkbox));
       await tester.pump();
       await submitForm(tester);
-      expect(find.text('Pendaftaran belum tersedia'), findsOneWidget);
+      expect(find.text('Layanan akun belum tersedia.'), findsOneWidget);
       expect(find.text('Akun berhasil dibuat'), findsNothing);
-      await tester.tap(find.text('Mengerti'));
-      await tester.pumpAndSettle();
       expect(find.text('Attar Rais'), findsOneWidget);
     },
   );
