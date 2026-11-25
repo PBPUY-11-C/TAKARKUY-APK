@@ -37,10 +37,12 @@ GoRouter createAppRouter(AuthState authState) => GoRouter(
       AppRoutes.dashboard,
       AppRoutes.account,
     };
-    if (protected.contains(path) && !authState.isAuthenticated)
+    if (protected.contains(path) && !authState.isAuthenticated) {
       return AppRoutes.login;
-    if (path == AppRoutes.login && authState.isAuthenticated)
+    }
+    if (path == AppRoutes.login && authState.isAuthenticated) {
       return AppRoutes.dashboard;
+    }
     return null;
   },
   routes: [

@@ -179,8 +179,9 @@ class AuthState extends ChangeNotifier {
     while (value is List && value.isNotEmpty) {
       value = value.first;
     }
-    if (value is Map && value['message'] != null)
+    if (value is Map && value['message'] != null) {
       return value['message'].toString();
+    }
     return value?.toString() ?? 'Periksa kembali isian ini.';
   }
 
