@@ -29,32 +29,43 @@ class PlanDetailPage extends StatelessWidget {
   }
 }
 
+/// Meminta konfirmasi lalu menghapus rencana; true bila terhapus. Dipakai halaman HP dan panel tablet.
+Future<bool> _confirmDelete(BuildContext context, PlanDetailProvider detail) async {
+  final yes = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Hapus rencana ini?'),
+      content: const Text('Jadwal dan daftar belanjanya ikut terhapus. Stok Pantry tidak berubah.'),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: PlannerColors.danger),
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text('Hapus'),
+        ),
+      ],
+    ),
+  );
+  if (yes != true || !context.mounted) return false;
+  if (await detail.delete()) return true;
+  if (context.mounted) showAppSnackBar(context, detail.saveError ?? 'Rencana gagal dihapus.', error: true);
+  return false;
+}
+
+/// Membuka lembar simpan judul dan tanggal; true bila tersimpan.
+Future<bool> _openSaveSheet(BuildContext context, PlanDetailProvider detail) async {
+  final saved = await showModalBottomSheet<bool>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (_) => ChangeNotifierProvider.value(value: detail, child: const _SaveSheet()),
+  );
+  if (saved == true && context.mounted) showAppSnackBar(context, 'Rencana tersimpan.');
+  return saved == true;
+}
+
 class _PlanDetailScaffold extends StatelessWidget {
   const _PlanDetailScaffold();
-
-  Future<void> _confirmDelete(BuildContext context, PlanDetailProvider detail) async {
-    final yes = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Hapus rencana ini?'),
-        content: const Text('Jadwal dan daftar belanjanya ikut terhapus. Stok Pantry tidak berubah.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: PlannerColors.danger),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Hapus'),
-          ),
-        ],
-      ),
-    );
-    if (yes != true || !context.mounted) return;
-    if (await detail.delete()) {
-      if (context.mounted) Navigator.pop(context, true);
-    } else if (context.mounted) {
-      showAppSnackBar(context, detail.saveError ?? 'Rencana gagal dihapus.', error: true);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +80,9 @@ class _PlanDetailScaffold extends StatelessWidget {
             Center(child: _StatusChip(draft: plan.summary.isDraft)),
             PopupMenuButton<String>(
               tooltip: 'Pilihan lain',
-              onSelected: (_) => _confirmDelete(context, detail),
+              onSelected: (_) async {
+                if (await _confirmDelete(context, detail) && context.mounted) Navigator.pop(context, true);
+              },
               itemBuilder: (_) => const [PopupMenuItem(value: 'delete', child: Text('Hapus rencana'))],
             ),
           ],
@@ -100,15 +113,71 @@ class _PlanDetailScaffold extends StatelessWidget {
             ),
     );
   }
+}
 
-  Future<void> _openSaveSheet(BuildContext context, PlanDetailProvider detail) async {
-    final saved = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => ChangeNotifierProvider.value(value: detail, child: const _SaveSheet()),
+/// Hasil rencana untuk panel kanan tablet: judul, status, simpan, dan hapus di atas, tanpa AppBar.
+class PlanDetailPane extends StatelessWidget {
+  const PlanDetailPane({super.key, required this.planId, required this.onChanged, required this.onDeleted});
+
+  final String planId;
+
+  /// Dipanggil setelah judul atau tanggal tersimpan, agar daftar di kiri ikut diperbarui.
+  final VoidCallback onChanged;
+  final VoidCallback onDeleted;
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (context) =>
+          PlanDetailProvider(PlannerRepository(context.read<ApiClient?>() ?? ApiClient()), planId: planId)..load(),
+      child: Builder(builder: (context) {
+        final detail = context.watch<PlanDetailProvider>();
+        final plan = detail.plan;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (plan != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 8, 0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(plan.summary.title,
+                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: PlannerColors.ink)),
+                    ),
+                    _StatusChip(draft: plan.summary.isDraft),
+                    const SizedBox(width: 8),
+                    FilledButton.tonal(
+                      onPressed: detail.busy
+                          ? null
+                          : () async {
+                              if (await _openSaveSheet(context, detail)) onChanged();
+                            },
+                      child: Text(plan.summary.isDraft ? 'Simpan rencana' : 'Ubah judul & tanggal'),
+                    ),
+                    PopupMenuButton<String>(
+                      tooltip: 'Pilihan lain',
+                      onSelected: (_) async {
+                        if (await _confirmDelete(context, detail)) onDeleted();
+                      },
+                      itemBuilder: (_) => const [PopupMenuItem(value: 'delete', child: Text('Hapus rencana'))],
+                    ),
+                  ],
+                ),
+              ),
+            Expanded(
+              child: AsyncStateView(
+                loading: detail.loading,
+                hasData: plan != null,
+                error: detail.error,
+                onRetry: detail.load,
+                builder: (context) => PlanDetailBody(plan: plan!),
+              ),
+            ),
+          ],
+        );
+      }),
     );
-    if (saved == true && context.mounted) showAppSnackBar(context, 'Rencana tersimpan.');
   }
 }
 

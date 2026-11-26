@@ -49,15 +49,17 @@ class PlanCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
+              Wrap(
+                spacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.end,
                 children: [
                   Text(formatRupiah(plan.total),
                       style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: PlannerColors.ink)),
-                  const SizedBox(width: 6),
-                  Text('/ ${formatRupiah(plan.budget)}',
-                      style: const TextStyle(fontSize: 13, color: PlannerColors.muted)),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 2),
+                    child: Text('/ ${formatRupiah(plan.budget)}',
+                        style: const TextStyle(fontSize: 13, color: PlannerColors.muted)),
+                  ),
                 ],
               ),
               const SizedBox(height: 8),
