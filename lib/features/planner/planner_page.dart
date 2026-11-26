@@ -13,6 +13,7 @@ import 'data/planner_repository.dart';
 import 'planner_colors.dart';
 import 'providers/planner_provider.dart';
 import 'screens/create_plan_page.dart';
+import 'screens/plan_detail_page.dart';
 import 'widgets/plan_card.dart';
 
 /// Halaman Meal Planner (Modul 1): daftar Rencana Saya dari API.
@@ -45,13 +46,26 @@ class _PlannerViewState extends State<_PlannerView> {
     super.dispose();
   }
 
-  /// Membuka form rencana baru; daftar dimuat ulang bila sebuah rencana berhasil dibuat.
+  /// Membuka form rencana baru; rencana yang berhasil dibuat langsung dibuka di halaman hasil.
   Future<void> _create(PlannerProvider planner) async {
     final router = GoRouter.maybeOf(context);
     final plan = router != null
         ? await router.push<PlanDetail>(AppRoutes.plannerNew)
         : await Navigator.push<PlanDetail>(context, MaterialPageRoute(builder: (_) => const CreatePlanPage()));
-    if (plan != null) await planner.load();
+    if (plan == null || !mounted) return;
+    await planner.load();
+    if (mounted) await _open(planner, plan.summary.id);
+  }
+
+  /// Membuka hasil rencana, lalu memuat ulang daftar karena judul, status, atau keberadaannya bisa berubah.
+  Future<void> _open(PlannerProvider planner, String id) async {
+    final router = GoRouter.maybeOf(context);
+    if (router != null) {
+      await router.push<bool>(AppRoutes.plannerDetail(id));
+    } else {
+      await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => PlanDetailPage(planId: id)));
+    }
+    if (mounted) await planner.load();
   }
 
   void _delete(PlannerProvider planner, PlanSummary plan) {
@@ -152,7 +166,7 @@ class _PlannerViewState extends State<_PlannerView> {
                       direction: DismissDirection.endToStart,
                       onDismissed: (_) => _delete(planner, plan),
                       background: const _DeleteBackground(),
-                      child: PlanCard(plan: plan),
+                      child: PlanCard(plan: plan, onTap: () => _open(planner, plan.id)),
                     );
                   },
                 ),

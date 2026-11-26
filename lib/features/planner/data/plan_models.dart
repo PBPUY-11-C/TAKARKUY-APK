@@ -169,6 +169,9 @@ class Nutrition {
 
   List<int> get values => [calories, protein, carbs, fat];
 
+  /// Persentase terhadap acuan harian, dibulatkan dan boleh lebih dari 100.
+  List<int> get percents => [for (var i = 0; i < targets.length; i++) (values[i] * 100 / targets[i]).round()];
+
   /// Isi tiap cincin gizi, dibatasi 0 sampai 1.
   List<double> get ratios =>
       [for (var i = 0; i < targets.length; i++) (values[i] / targets[i]).clamp(0, 1).toDouble()];
