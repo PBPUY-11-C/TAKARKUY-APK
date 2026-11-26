@@ -10,7 +10,7 @@ class LeftDrawer extends StatelessWidget {
   static const _modules = <(IconData, String, String)>[
     (Icons.calendar_month_outlined, 'Smart Meal Planner', AppRoutes.planner),
     (Icons.kitchen_outlined, 'Smart Pantry', AppRoutes.pantry),
-    (Icons.person_outline, 'Akun & Preferensi', AppRoutes.login),
+    (Icons.person_outline, 'Akun & Preferensi', AppRoutes.account),
     (Icons.menu_book_outlined, 'Buku Resep & Masak', AppRoutes.resep),
     (Icons.dashboard_outlined, 'Dashboard & Market', AppRoutes.dashboard),
   ];

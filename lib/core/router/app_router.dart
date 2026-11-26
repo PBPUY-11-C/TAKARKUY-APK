@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:takarkuy_apk/app/menu_page.dart';
 import 'package:takarkuy_apk/features/akun/screens/akun_page.dart';
+import 'package:takarkuy_apk/features/akun/screens/profile_page.dart';
 import 'package:takarkuy_apk/features/akun/screens/signup_page.dart';
 import 'package:takarkuy_apk/features/akun/data/auth_state.dart';
 import 'package:takarkuy_apk/features/dashboard/screens/dashboard_screen.dart';
@@ -50,6 +51,7 @@ GoRouter createAppRouter(AuthState authState) => GoRouter(
     _route(AppRoutes.dashboard, const DashboardScreen()),
     _route(AppRoutes.login, const AkunPage()),
     _route(AppRoutes.signup, const SignupPage()),
+    _route(AppRoutes.account, const AccountProfilePage()),
   ],
 );
 
