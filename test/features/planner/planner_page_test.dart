@@ -11,6 +11,7 @@ import 'package:takarkuy_apk/core/api/api_client.dart';
 import 'package:takarkuy_apk/features/planner/planner_format.dart';
 import 'package:takarkuy_apk/features/planner/planner_page.dart';
 import 'package:takarkuy_apk/features/planner/providers/planner_provider.dart';
+import 'package:takarkuy_apk/features/planner/screens/create_plan_page.dart';
 
 import 'planner_fixtures.dart';
 
@@ -95,6 +96,15 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('Rencana Makan Saya'), findsNothing);
     expect(find.text('Akhir Pekan'), findsOneWidget);
+  });
+
+  testWidgets('tombol Rencana baru membuka form tiga langkah', (tester) async {
+    await _Harness().pump(tester);
+
+    await tester.tap(find.text('Rencana baru'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(CreatePlanPage), findsOneWidget);
   });
 
   testWidgets('geser kartu menghapusnya, dan Batal mengembalikannya tanpa mengirim apa pun', (tester) async {
