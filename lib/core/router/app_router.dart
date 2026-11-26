@@ -9,12 +9,16 @@ import 'package:takarkuy_apk/features/akun/data/auth_state.dart';
 import 'package:takarkuy_apk/features/dashboard/screens/dashboard_screen.dart';
 import 'package:takarkuy_apk/features/pantry/pantry_page.dart';
 import 'package:takarkuy_apk/features/planner/planner_page.dart';
+import 'package:takarkuy_apk/features/planner/screens/create_plan_page.dart';
+import 'package:takarkuy_apk/features/planner/screens/plan_detail_page.dart';
 import 'package:takarkuy_apk/features/recipe_book/screens/recipe_list_page.dart';
 
 /// Alamat setiap halaman utama; modul memakai konstanta ini, bukan menulis string sendiri.
 abstract final class AppRoutes {
   static const home = '/';
   static const planner = '/planner';
+  static const plannerNew = '/planner/new';
+  static String plannerDetail(String id) => '/planner/plans/$id';
   static const pantry = '/pantry';
   static const resep = '/resep';
   static const dashboard = '/dashboard';
@@ -32,12 +36,14 @@ GoRouter createAppRouter(AuthState authState) => GoRouter(
     final path = state.uri.path;
     const protected = {
       AppRoutes.planner,
+      AppRoutes.plannerNew,
       AppRoutes.pantry,
       AppRoutes.resep,
       AppRoutes.dashboard,
       AppRoutes.account,
     };
-    if (protected.contains(path) && !authState.isAuthenticated) {
+    final isProtected = protected.contains(path) || path.startsWith('${AppRoutes.planner}/');
+    if (isProtected && !authState.isAuthenticated) {
       return AppRoutes.login;
     }
     if (path == AppRoutes.login && authState.isAuthenticated) {
@@ -48,6 +54,8 @@ GoRouter createAppRouter(AuthState authState) => GoRouter(
   routes: [
     _route(AppRoutes.home, const MenuPage()),
     _route(AppRoutes.planner, const PlannerPage()),
+    _route(AppRoutes.plannerNew, const CreatePlanPage()),
+    _routeWith('/planner/plans/:id', (state) => PlanDetailPage(planId: state.pathParameters['id']!)),
     _route(AppRoutes.pantry, const PantryPage()),
     _route(AppRoutes.resep, const RecipeListPage()),
     _route(AppRoutes.dashboard, const DashboardScreen()),
@@ -58,7 +66,10 @@ GoRouter createAppRouter(AuthState authState) => GoRouter(
 );
 
 /// Rute dengan transisi bersama: halaman baru memudar sambil sedikit naik.
-GoRoute _route(String path, Widget page) => GoRoute(
+GoRoute _route(String path, Widget page) => _routeWith(path, (_) => page);
+
+/// Sama dengan `_route`, untuk halaman yang butuh parameter dari alamat (mis. `:id`).
+GoRoute _routeWith(String path, Widget Function(GoRouterState state) build) => GoRoute(
   path: path,
   pageBuilder: (context, state) => CustomTransitionPage<void>(
     key: state.pageKey,
@@ -67,7 +78,7 @@ GoRoute _route(String path, Widget page) => GoRoute(
     arguments: state.extra,
     transitionDuration: AppRoutes.transitionDuration,
     reverseTransitionDuration: AppRoutes.transitionDuration,
-    child: page,
+    child: build(state),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
       final curved = CurvedAnimation(
         parent: animation,
