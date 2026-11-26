@@ -9,12 +9,14 @@ import 'package:takarkuy_apk/features/akun/data/auth_state.dart';
 import 'package:takarkuy_apk/features/dashboard/screens/dashboard_screen.dart';
 import 'package:takarkuy_apk/features/pantry/pantry_page.dart';
 import 'package:takarkuy_apk/features/planner/planner_page.dart';
+import 'package:takarkuy_apk/features/planner/screens/create_plan_page.dart';
 import 'package:takarkuy_apk/features/recipe_book/screens/recipe_list_page.dart';
 
 /// Alamat setiap halaman utama; modul memakai konstanta ini, bukan menulis string sendiri.
 abstract final class AppRoutes {
   static const home = '/';
   static const planner = '/planner';
+  static const plannerNew = '/planner/new';
   static const pantry = '/pantry';
   static const resep = '/resep';
   static const dashboard = '/dashboard';
@@ -32,6 +34,7 @@ GoRouter createAppRouter(AuthState authState) => GoRouter(
     final path = state.uri.path;
     const protected = {
       AppRoutes.planner,
+      AppRoutes.plannerNew,
       AppRoutes.pantry,
       AppRoutes.resep,
       AppRoutes.dashboard,
@@ -48,6 +51,7 @@ GoRouter createAppRouter(AuthState authState) => GoRouter(
   routes: [
     _route(AppRoutes.home, const MenuPage()),
     _route(AppRoutes.planner, const PlannerPage()),
+    _route(AppRoutes.plannerNew, const CreatePlanPage()),
     _route(AppRoutes.pantry, const PantryPage()),
     _route(AppRoutes.resep, const RecipeListPage()),
     _route(AppRoutes.dashboard, const DashboardScreen()),

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'package:takarkuy_apk/core/api/api_client.dart';
+import 'package:takarkuy_apk/core/router/app_router.dart';
 import 'package:takarkuy_apk/core/utils/debouncer.dart';
 import 'package:takarkuy_apk/core/widgets/app_snackbar.dart';
 import 'package:takarkuy_apk/core/widgets/async_state_view.dart';
@@ -10,6 +12,7 @@ import 'data/plan_models.dart';
 import 'data/planner_repository.dart';
 import 'planner_colors.dart';
 import 'providers/planner_provider.dart';
+import 'screens/create_plan_page.dart';
 import 'widgets/plan_card.dart';
 
 /// Halaman Meal Planner (Modul 1): daftar Rencana Saya dari API.
@@ -42,6 +45,15 @@ class _PlannerViewState extends State<_PlannerView> {
     super.dispose();
   }
 
+  /// Membuka form rencana baru; daftar dimuat ulang bila sebuah rencana berhasil dibuat.
+  Future<void> _create(PlannerProvider planner) async {
+    final router = GoRouter.maybeOf(context);
+    final plan = router != null
+        ? await router.push<PlanDetail>(AppRoutes.plannerNew)
+        : await Navigator.push<PlanDetail>(context, MaterialPageRoute(builder: (_) => const CreatePlanPage()));
+    if (plan != null) await planner.load();
+  }
+
   void _delete(PlannerProvider planner, PlanSummary plan) {
     planner.deleteWithUndo(plan);
     showAppSnackBar(
@@ -66,6 +78,13 @@ class _PlannerViewState extends State<_PlannerView> {
     return Scaffold(
       backgroundColor: PlannerColors.background,
       appBar: AppBar(title: const Text('Meal Planner')),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _create(planner),
+        backgroundColor: PlannerColors.green,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text('Rencana baru', style: TextStyle(fontWeight: FontWeight.w700)),
+      ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
