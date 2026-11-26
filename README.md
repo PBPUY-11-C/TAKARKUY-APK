@@ -111,7 +111,7 @@ Aplikasi Flutter  ──(HTTP request)──▶  Django REST Framework (web di P
        └──────────────(respons JSON)──────────────┘
 ```
 
-1. Pengguna masuk di aplikasi mobile memakai akun yang sama dengan versi web. Setelah berhasil, setiap permintaan berikutnya membawa identitas login pengguna.
+1. Pengguna masuk di aplikasi mobile memakai akun yang sama dengan versi web. Server membalas sebuah token, dan setiap permintaan berikutnya membawa header `Authorization: Token <token>`.
 2. Saat sebuah halaman dibuka atau pengguna menyimpan perubahan, aplikasi mengirim request HTTP ke endpoint API di web.
 3. Django REST Framework memeriksa login dan kepemilikan data, membaca atau mengubah database, lalu mengirim balasan dalam format JSON.
 4. Aplikasi mengubah JSON tersebut menjadi objek Dart (model) dan menampilkannya di layar.
@@ -119,7 +119,7 @@ Aplikasi Flutter  ──(HTTP request)──▶  Django REST Framework (web di P
 
 ### Daftar Endpoint API
 
-Dokumentasi lengkap yang dibuat otomatis dari kode tersedia di [Swagger](https://alfredo-nathaniel-takarkuy.pws.cs.ui.ac.id/api/docs/) dan [Redoc](https://alfredo-nathaniel-takarkuy.pws.cs.ui.ac.id/api/redoc/). Semua endpoint kecuali login, logout, dan daftar wajib login, hanya mengembalikan data milik pengguna sendiri, dan hanya memakai GET serta POST karena `pbp_django_auth` hanya mendukung dua method itu. Body POST selalu JSON, kecuali login yang juga menerima form. Setiap error berbentuk `{"error": "pesan", "code": "kode"}`, ditambah `fields` untuk error per kolom.
+Dokumentasi lengkap yang dibuat otomatis dari kode tersedia di [Swagger](https://alfredo-nathaniel-takarkuy.pws.cs.ui.ac.id/api/docs/) dan [Redoc](https://alfredo-nathaniel-takarkuy.pws.cs.ui.ac.id/api/redoc/). Login memakai token DRF seperti Tutorial 10: `POST /api/auth/login/` membalas `{"status": true, "username": ..., "token": ...}`, lalu aplikasi mengirim `Authorization: Token <token>` di setiap request, dan `POST /api/auth/logout/` mencabut token itu (204). Semua endpoint kecuali login, logout, dan daftar wajib login dan hanya mengembalikan data milik pengguna sendiri. Aksi ubah dan hapus memakai POST ke URL aksi (`.../update/`, `.../delete/`). Body POST berupa JSON. Setiap error berbentuk `{"error": "pesan", "code": "kode"}`, ditambah `fields` untuk error per kolom.
 
 | Modul | Method | Endpoint | Fungsi |
 | --- | --- | --- | --- |
@@ -134,7 +134,7 @@ Dokumentasi lengkap yang dibuat otomatis dari kode tersedia di [Swagger](https:/
 | | GET | `/api/pantry/items/<id>/movements/` | Riwayat perubahan stok |
 | | GET | `/api/pantry/recipes/` | Ide menu dari stok |
 | | POST | `/api/pantry/receipt/scan/` | Baca struk belanja |
-| 3 Akun | POST | `/api/auth/login/`, `/api/auth/logout/`, `/api/auth/register/` | Masuk, keluar, daftar |
+| 3 Akun | POST | `/api/auth/login/`, `/api/auth/logout/`, `/api/auth/register/` | Masuk (menerbitkan token), keluar (mencabut token), daftar |
 | | GET | `/api/auth/profile/` | Profil dan preferensi makanan |
 | | POST | `/api/auth/profile/update/`, `/api/auth/preferences/update/`, `/api/auth/password/` | Ubah profil, preferensi, kata sandi |
 | 4 Resep | GET | `/api/recipes/`, `/api/recipes/<kode>/` | Cari resep; detail resep |
@@ -154,7 +154,7 @@ Untuk memastikan semua endpoint hidup, jalankan dari folder proyek web: `python 
 
 ```text
 lib/
-  main.dart              akar aplikasi: sesi login, ApiClient, tema, router
+  main.dart              akar aplikasi: ApiClient, AuthState (token), tema, router
   app/                   kerangka aplikasi (halaman awal)
   core/
     api/                 ApiConfig (alamat server) dan ApiClient (pintu ke API)
@@ -163,14 +163,15 @@ lib/
     utils/               Debouncer dan optimistic()
     widgets/             LeftDrawer, AsyncStateView, showAppSnackBar
   features/<modul>/      satu folder per modul: data/ (model, repository), providers/, screens/, widgets/
-test/                    mengikuti struktur lib/; test/support/ berisi server palsu untuk tes
+test/                    mengikuti struktur lib/
 ```
 
 Aturan bersama supaya aplikasi terasa satu produk:
 
 - **Warna:** pakai `AppColors` (mis. `AppColors.green`, `AppColors.muted`), bukan `Color(0x...)`. AppBar, tombol, input, kartu, dan SnackBar sudah otomatis mengikuti `AppTheme`.
 - **Navigasi:** pindah halaman dengan `context.push(AppRoutes.pantry)`. Rute baru didaftarkan di `lib/core/router/app_router.dart` supaya ikut mendapat transisi bersama.
-- **API:** ambil `ApiClient` dengan `context.read<ApiClient>()`, lalu `await api.get('/api/...')` atau `await api.post('/api/...', {...})`. Setiap kegagalan (error server, koneksi putus, jawaban rusak) dilempar sebagai `ApiException` dengan pesan berbahasa Indonesia yang siap ditampilkan.
+- **API:** ambil `ApiClient` dengan `context.read<ApiClient>()`, lalu `await api.get('/api/...')` atau `await api.post('/api/...', {...})`. Token login dikirim otomatis. Setiap kegagalan (error server, koneksi putus, jawaban rusak) dilempar sebagai `ApiException` dengan pesan berbahasa Indonesia yang siap ditampilkan.
+- **Login:** status masuk ada di `AuthState` (`context.watch<AuthState>().isAuthenticated`). Rute Planner, Pantry, Resep, Dashboard, dan Akun otomatis dialihkan ke halaman Masuk bila belum login; rute baru yang wajib login ditambahkan ke daftar `protected` di `app_router.dart`.
 - **State:** simpan data modul di `ChangeNotifier` (Provider) dengan status memuat, berhasil, dan gagal, lalu tampilkan lewat `AsyncStateView` (lengkap dengan tombol "Coba lagi").
 - **Interaksi:** pencarian memakai `Debouncer`, hapus atau ubah yang langsung terlihat memakai `optimistic()` dengan tombol "Batal" di `showAppSnackBar`.
 
@@ -186,12 +187,15 @@ try {
 }
 ```
 
-**Tes tanpa internet:** jalankan aplikasi dengan server palsu, lalu periksa tampilan dan panggilan yang terjadi.
+**Tes tanpa internet:** jalankan aplikasi dengan `MockClient` dari `package:http/testing.dart` sebagai server palsu dan token tes, lalu periksa tampilan dan request yang terjadi.
 
 ```dart
-final request = FakeCookieRequest({'GET /api/planner/plans/': []});
-await tester.pumpWidget(TakarKuyApp(request: request));
-expect(request.calls.single.path, '/api/planner/plans/');
+final client = MockClient((request) async {
+  expect(request.url.path, '/api/planner/plans/');
+  expect(request.headers['authorization'], 'Token test-token');
+  return http.Response('[]', 200);
+});
+await tester.pumpWidget(TakarKuyApp(client: client, initialToken: 'test-token'));
 ```
 
 **Alur kerja tiap anggota:** satu branch per modul (`modul-<nama>`), commit `test:` dulu lalu `feat:`/`fix:`, `flutter analyze` dan `flutter test` hijau sebelum push, lalu pull request ke `main` yang wajib di-review satu anggota lain dan diperiksa CodeRabbit.
