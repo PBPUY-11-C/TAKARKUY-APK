@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
+import '../data/auth_state.dart';
+import '../../../core/router/app_router.dart';
+import '../../../core/widgets/app_snackbar.dart';
 import '../auth_error_banner.dart';
 import '../auth_layout.dart';
 import '../auth_theme.dart';
@@ -28,6 +33,7 @@ class _SignupPageState extends State<SignupPage> {
   bool _showConfirmation = false;
   Brightness? _brightnessOverride;
   bool _themeInitialized = false;
+  Map<String, String> _serverErrors = {};
 
   Brightness get _brightness =>
       _brightnessOverride ?? Theme.of(context).brightness;
@@ -37,15 +43,30 @@ class _SignupPageState extends State<SignupPage> {
   bool get _hasErrors =>
       !_acceptedTerms ||
       [
-        SignupValidation.name(_name.text),
-        SignupValidation.username(_username.text),
-        SignupValidation.email(_email.text),
-        SignupValidation.password(_password.text),
-        SignupValidation.confirmation(_confirmation.text, _password.text),
-      ].any((error) => error != null);
+        _validation('name', SignupValidation.name(_name.text)),
+        _validation('username', SignupValidation.username(_username.text)),
+        _validation('email', SignupValidation.email(_email.text)),
+        _validation('password', SignupValidation.password(_password.text)),
+        _validation(
+          'confirmation',
+          SignupValidation.confirmation(_confirmation.text, _password.text),
+        ),
+      ].any((error) => error != null) ||
+      _serverErrors.isNotEmpty;
+
+  String? _validation(String input, String? localError) {
+    const fieldNames = {
+      'name': 'full_name',
+      'password': 'password1',
+      'confirmation': 'password2',
+    };
+    return localError ?? _serverErrors[fieldNames[input] ?? input];
+  }
 
   void _onFormChanged() {
-    if (_submitted) setState(() {});
+    if (_submitted || _serverErrors.isNotEmpty) {
+      setState(() => _serverErrors = {});
+    }
   }
 
   @override
@@ -80,7 +101,7 @@ class _SignupPageState extends State<SignupPage> {
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     final valid = _formKey.currentState!.validate();
     setState(() {
       _submitted = true;
@@ -91,19 +112,54 @@ class _SignupPageState extends State<SignupPage> {
       revealAuthError(_errorSummaryKey);
       return;
     }
-    _showNotice('Pendaftaran belum tersedia', 'Silakan coba lagi nanti.');
+    final auth = Provider.of<AuthState?>(context, listen: false);
+    if (auth == null) {
+      showAppSnackBar(context, 'Layanan akun belum tersedia.', error: true);
+      return;
+    }
+    setState(() => _serverErrors = {});
+    final success = await auth.register({
+      'full_name': _name.text.trim(),
+      'username': _username.text.trim(),
+      'email': _email.text.trim(),
+      'password1': _password.text,
+      'password2': _confirmation.text,
+    });
+    if (!mounted) return;
+    if (success) {
+      showAppSnackBar(context, 'Akun berhasil dibuat. Silakan MasukKuy.');
+      context.go(AppRoutes.login);
+      return;
+    }
+    setState(() {
+      _serverErrors = auth.fieldErrors;
+      _submitted = true;
+      _showTermsError = false;
+    });
+    if (_hasErrors) revealAuthError(_errorSummaryKey);
+    showAppSnackBar(
+      context,
+      auth.error ?? 'Pendaftaran gagal. Coba lagi.',
+      error: true,
+    );
   }
 
   void _goToLogin() {
-    final arguments = ModalRoute.of(context)?.settings.arguments;
-    if (arguments is Map &&
-        arguments['fromLogin'] == true &&
-        Navigator.canPop(context)) {
-      Navigator.pop(context);
+    if (GoRouter.maybeOf(context) != null && context.canPop()) {
+      context.pop();
+    } else if (GoRouter.maybeOf(context) != null) {
+      context.go(AppRoutes.login, extra: {'brightness': _brightness});
     } else {
+      final arguments = ModalRoute.of(context)?.settings.arguments;
+      if (arguments is Map &&
+          arguments['fromLogin'] == true &&
+          Navigator.canPop(context)) {
+        Navigator.pop(context);
+        return;
+      }
       Navigator.pushReplacementNamed(
         context,
-        '/login',
+        AppRoutes.login,
         arguments: {'brightness': _brightness},
       );
     }
@@ -141,11 +197,22 @@ class _SignupPageState extends State<SignupPage> {
   @override
   Widget build(BuildContext context) {
     final colors = AuthColors(_brightness);
+    final auth = context.watch<AuthState?>();
     return AuthLayout(
       theme: _theme,
       colors: colors,
       backLabel: 'Kembali',
-      onBack: () => Navigator.maybePop(context),
+      onBack: () {
+        if (GoRouter.maybeOf(context) != null) {
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.go(AppRoutes.home);
+          }
+        } else {
+          Navigator.maybePop(context);
+        }
+      },
       onToggleTheme: () => setState(
         () => _brightnessOverride = colors.dark
             ? Brightness.light
@@ -175,7 +242,8 @@ class _SignupPageState extends State<SignupPage> {
               id: 'name',
               showErrors: _submitted,
               controller: _name,
-              validator: SignupValidation.name,
+              validator: (value) =>
+                  _validation('name', SignupValidation.name(value)),
               autofillHints: const [AutofillHints.name],
               label: 'Nama Lengkap',
               hint: 'Nama lengkap kamu',
@@ -186,7 +254,8 @@ class _SignupPageState extends State<SignupPage> {
               id: 'username',
               showErrors: _submitted,
               controller: _username,
-              validator: SignupValidation.username,
+              validator: (value) =>
+                  _validation('username', SignupValidation.username(value)),
               autofillHints: const [AutofillHints.newUsername],
               label: 'Username',
               hint: 'username_kamu',
@@ -197,7 +266,8 @@ class _SignupPageState extends State<SignupPage> {
               id: 'email',
               showErrors: _submitted,
               controller: _email,
-              validator: SignupValidation.email,
+              validator: (value) =>
+                  _validation('email', SignupValidation.email(value)),
               autofillHints: const [AutofillHints.email],
               label: 'Email',
               hint: 'nama@email.com',
@@ -209,7 +279,8 @@ class _SignupPageState extends State<SignupPage> {
               id: 'password',
               showErrors: _submitted,
               controller: _password,
-              validator: SignupValidation.password,
+              validator: (value) =>
+                  _validation('password', SignupValidation.password(value)),
               onToggle: () => setState(() => _showPassword = !_showPassword),
               autofillHints: const [AutofillHints.newPassword],
               label: 'Kata Sandi',
@@ -222,8 +293,10 @@ class _SignupPageState extends State<SignupPage> {
               id: 'confirmation',
               showErrors: _submitted,
               controller: _confirmation,
-              validator: (value) =>
-                  SignupValidation.confirmation(value, _password.text),
+              validator: (value) => _validation(
+                'confirmation',
+                SignupValidation.confirmation(value, _password.text),
+              ),
               onToggle: () =>
                   setState(() => _showConfirmation = !_showConfirmation),
               onSubmitted: (_) => _submit(),
@@ -313,7 +386,7 @@ class _SignupPageState extends State<SignupPage> {
                 ),
               ),
             FilledButton(
-              onPressed: _submit,
+              onPressed: auth?.isLoading == true ? null : _submit,
               style: FilledButton.styleFrom(
                 backgroundColor: colors.accent,
                 foregroundColor: colors.actionText,
@@ -326,22 +399,27 @@ class _SignupPageState extends State<SignupPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Flexible(
-                    child: Text(
-                      'DaftarKuy',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                      ),
+              child: auth?.isLoading == true
+                  ? const SizedBox.square(
+                      dimension: 21,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            'DaftarKuy',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 10),
+                        Icon(Icons.arrow_forward, size: 20),
+                      ],
                     ),
-                  ),
-                  SizedBox(width: 10),
-                  Icon(Icons.arrow_forward, size: 20),
-                ],
-              ),
             ),
           ],
         ),
