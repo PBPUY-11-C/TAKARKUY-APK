@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
+import '../data/auth_state.dart';
 import '../auth_error_banner.dart';
 import '../auth_layout.dart';
 import '../auth_theme.dart';
+import '../../../core/router/app_router.dart';
+import '../../../core/widgets/app_snackbar.dart';
 
 /// Halaman masuk Modul 3, dikembangkan dari kerangka Akun yang sudah ada.
 class AkunPage extends StatefulWidget {
@@ -22,6 +27,7 @@ class _AkunPageState extends State<AkunPage> {
   bool _submitted = false;
   bool _themeInitialized = false;
   Brightness? _brightnessOverride;
+  Map<String, String> _serverErrors = {};
 
   Brightness get _brightness =>
       _brightnessOverride ?? Theme.of(context).brightness;
@@ -29,17 +35,23 @@ class _AkunPageState extends State<AkunPage> {
   AuthColors get _colors => AuthColors(_brightness);
 
   String? _identifierError(String? value) =>
-      value == null || value.trim().isEmpty ? 'Isi email atau username.' : null;
+      value == null || value.trim().isEmpty
+      ? 'Isi email atau username.'
+      : _serverErrors['username'];
 
-  String? _passwordError(String? value) =>
-      value == null || value.isEmpty ? 'Isi kata sandi.' : null;
+  String? _passwordError(String? value) => value == null || value.isEmpty
+      ? 'Isi kata sandi.'
+      : _serverErrors['password'];
 
   bool get _hasErrors =>
       _identifierError(_identifier.text) != null ||
-      _passwordError(_password.text) != null;
+      _passwordError(_password.text) != null ||
+      _serverErrors.isNotEmpty;
 
   void _onFormChanged() {
-    if (_submitted) setState(() {});
+    if (_submitted || _serverErrors.isNotEmpty) {
+      setState(() => _serverErrors = {});
+    }
   }
 
   @override
@@ -58,7 +70,7 @@ class _AkunPageState extends State<AkunPage> {
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     setState(() => _submitted = true);
     final valid = _formKey.currentState!.validate();
     FocusScope.of(context).unfocus();
@@ -66,45 +78,49 @@ class _AkunPageState extends State<AkunPage> {
       revealAuthError(_errorSummaryKey);
       return;
     }
-    final colors = _colors;
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => Theme(
-        data: _theme,
-        child: AlertDialog(
-          backgroundColor: colors.card,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: BorderSide(color: colors.border, width: 1.5),
-          ),
-          title: Text(
-            'Login belum tersedia',
-            style: TextStyle(color: colors.text, fontSize: 20),
-          ),
-          content: Text(
-            'Silakan coba lagi nanti.',
-            style: TextStyle(color: colors.muted),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              style: TextButton.styleFrom(foregroundColor: colors.accent),
-              child: const Text('Mengerti'),
-            ),
-          ],
-        ),
-      ),
+    final auth = Provider.of<AuthState?>(context, listen: false);
+    if (auth == null) {
+      showAppSnackBar(context, 'Layanan akun belum tersedia.', error: true);
+      return;
+    }
+    setState(() => _serverErrors = {});
+    final success = await auth.login(
+      _identifier.text,
+      _password.text,
+      rememberMe: _rememberMe,
+    );
+    if (!mounted) return;
+    if (success) {
+      context.go(AppRoutes.dashboard);
+      return;
+    }
+    setState(() {
+      _serverErrors = auth.fieldErrors;
+      _submitted = true;
+    });
+    if (_hasErrors) revealAuthError(_errorSummaryKey);
+    showAppSnackBar(
+      context,
+      auth.error ?? 'Login gagal. Coba lagi.',
+      error: true,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = _colors;
+    final auth = context.watch<AuthState?>();
     return AuthLayout(
       theme: _theme,
       colors: colors,
       backLabel: 'Kembali ke beranda',
-      onBack: () => Navigator.popUntil(context, (route) => route.isFirst),
+      onBack: () {
+        if (GoRouter.maybeOf(context) != null) {
+          context.go(AppRoutes.home);
+        } else {
+          Navigator.popUntil(context, (route) => route.isFirst);
+        }
+      },
       onToggleTheme: () => setState(
         () => _brightnessOverride = colors.dark
             ? Brightness.light
@@ -178,7 +194,7 @@ class _AkunPageState extends State<AkunPage> {
             ),
             const SizedBox(height: 4),
             FilledButton(
-              onPressed: _submit,
+              onPressed: auth?.isLoading == true ? null : _submit,
               style: FilledButton.styleFrom(
                 backgroundColor: colors.accent,
                 foregroundColor: colors.actionText,
@@ -191,33 +207,41 @@ class _AkunPageState extends State<AkunPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Flexible(
-                    child: Text(
-                      'MasukKuy',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                      ),
+              child: auth?.isLoading == true
+                  ? const SizedBox.square(
+                      dimension: 21,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            'MasukKuy',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 10),
+                        Icon(Icons.arrow_forward, size: 20),
+                      ],
                     ),
-                  ),
-                  SizedBox(width: 10),
-                  Icon(Icons.arrow_forward, size: 20),
-                ],
-              ),
             ),
           ],
         ),
       ),
       footerLabel: 'Belum punya akun?',
       footerAction: 'DaftarKuy',
-      onFooterAction: () => Navigator.pushNamed(
-        context,
-        '/signup',
-        arguments: {'fromLogin': true, 'brightness': _brightness},
-      ),
+      onFooterAction: () {
+        final extra = {'fromLogin': true, 'brightness': _brightness};
+        if (GoRouter.maybeOf(context) != null) {
+          context.push(AppRoutes.signup, extra: extra);
+        } else {
+          Navigator.pushNamed(context, AppRoutes.signup, arguments: extra);
+        }
+      },
     );
   }
 }
