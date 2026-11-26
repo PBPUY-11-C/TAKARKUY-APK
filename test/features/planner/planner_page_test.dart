@@ -123,6 +123,40 @@ void main() {
     expect(harness.requests.last.url.path, '/api/planner/plans/${summaryJson['id']}/');
   });
 
+  group('tablet (lebar 1194)', () {
+    setUp(() {
+      final view = TestWidgetsFlutterBinding.instance.platformDispatcher.views.first;
+      view.physicalSize = const Size(2388, 1668);
+      view.devicePixelRatio = 2;
+    });
+    tearDown(() => TestWidgetsFlutterBinding.instance.platformDispatcher.views.first.reset());
+
+    _Harness tabletHarness() => _Harness()
+      ..reply = (request) => http.Response(
+            jsonEncode(request.url.path == '/api/planner/plans/' ? [summaryJson, _saved] : detailJson),
+            200,
+          );
+
+    testWidgets('daftar dan detail tampil berdampingan', (tester) async {
+      await tabletHarness().pump(tester);
+
+      expect(find.text('Rencana Makan Saya'), findsOneWidget);
+      expect(find.text('Pilih rencana untuk melihat hasilnya.'), findsOneWidget);
+    });
+
+    testWidgets('mengetuk kartu membuka hasilnya di panel kanan tanpa pindah halaman', (tester) async {
+      await tabletHarness().pump(tester);
+
+      await tester.tap(find.text('Akhir Pekan'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(PlanDetailPage), findsNothing);
+      expect(find.byType(PlanDetailPane), findsOneWidget);
+      expect(find.text('Nasi Goreng Telur Pakcoy'), findsOneWidget);
+      expect(find.text('Rencana baru'), findsOneWidget);
+    });
+  });
+
   testWidgets('geser kartu menghapusnya, dan Batal mengembalikannya tanpa mengirim apa pun', (tester) async {
     final harness = _Harness();
     await harness.pump(tester);
