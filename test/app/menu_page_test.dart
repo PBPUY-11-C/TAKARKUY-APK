@@ -11,7 +11,8 @@ import 'package:takarkuy_apk/features/planner/planner_page.dart';
 void main() {
   // Ukuran layar HP umum (360 x 800) agar kelima kartu terlihat tanpa scroll.
   setUp(() {
-    final view = TestWidgetsFlutterBinding.instance.platformDispatcher.views.first;
+    final view =
+        TestWidgetsFlutterBinding.instance.platformDispatcher.views.first;
     view.physicalSize = const Size(1080, 2400);
     view.devicePixelRatio = 3;
   });
@@ -19,7 +20,9 @@ void main() {
     TestWidgetsFlutterBinding.instance.platformDispatcher.views.first.reset();
   });
 
-  testWidgets('halaman awal menampilkan nama aplikasi dan kelima modul', (tester) async {
+  testWidgets('halaman awal menampilkan nama aplikasi dan kelima modul', (
+    tester,
+  ) async {
     await tester.pumpWidget(const TakarKuyApp());
 
     expect(find.text('TAKARKUY'), findsOneWidget);
@@ -29,7 +32,7 @@ void main() {
   });
 
   testWidgets('kartu Planner membuka halaman Planner', (tester) async {
-    await tester.pumpWidget(const TakarKuyApp());
+    await tester.pumpWidget(const TakarKuyApp(initialToken: 'test-token'));
     await tester.tap(find.text('Planner'));
     await tester.pumpAndSettle();
 
@@ -37,7 +40,7 @@ void main() {
   });
 
   testWidgets('kartu Pantry membuka halaman Pantry', (tester) async {
-    await tester.pumpWidget(const TakarKuyApp());
+    await tester.pumpWidget(const TakarKuyApp(initialToken: 'test-token'));
     await tester.tap(find.text('Pantry'));
     await tester.pumpAndSettle();
 
@@ -45,7 +48,7 @@ void main() {
   });
 
   testWidgets('kartu Dashboard membuka Dashboard', (tester) async {
-    await tester.pumpWidget(const TakarKuyApp());
+    await tester.pumpWidget(const TakarKuyApp(initialToken: 'test-token'));
     await tester.tap(find.text('Dashboard'));
     await tester.pumpAndSettle();
 
@@ -53,7 +56,7 @@ void main() {
   });
 
   testWidgets('kartu Resep membuka halaman Buku Resep', (tester) async {
-    await tester.pumpWidget(const TakarKuyApp());
+    await tester.pumpWidget(const TakarKuyApp(initialToken: 'test-token'));
     await tester.tap(find.text('Resep'));
     await tester.pumpAndSettle();
 

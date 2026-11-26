@@ -1,55 +1,90 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
-import 'package:pbp_django_auth/pbp_django_auth.dart';
 
 import 'api_config.dart';
 
-/// Error API dengan pesan yang siap ditampilkan ke pengguna. `code` mengikuti server
-/// (mis. `invalid`, `not_authenticated`), atau `network`/`bad_response` dari sisi aplikasi.
 class ApiException implements Exception {
   const ApiException(this.message, {this.code, this.fields});
 
   final String message;
   final String? code;
-
-  /// Error per kolom form dari server, mis. `{'budget': ['Terlalu kecil.']}`.
   final Map<String, dynamic>? fields;
 
   @override
   String toString() => message;
 }
 
-/// Pintu tunggal semua modul ke API Django: memakai cookie login dari CookieRequest dan
-/// mengubah setiap kegagalan menjadi ApiException.
+/// Klien JSON bersama. Token aktif otomatis dikirim sebagai `Authorization: Token ...`.
 class ApiClient {
-  ApiClient(this.request);
+  ApiClient({http.Client? client, String? baseUrl})
+    : _client = client ?? http.Client(),
+      _baseUrl = baseUrl ?? ApiConfig.baseUrl;
 
-  final CookieRequest request;
+  final http.Client _client;
+  final String _baseUrl;
+  String? token;
 
-  Future<dynamic> get(String path) => _send(() => request.get(ApiConfig.url(path)));
+  Future<dynamic> get(String path) => _send('GET', path);
 
   Future<dynamic> post(String path, Map<String, dynamic> body) =>
-      _send(() => request.postJson(ApiConfig.url(path), jsonEncode(body)));
+      _send('POST', path, body: body);
 
-  static Future<dynamic> _send(Future<dynamic> Function() call) async {
-    final dynamic data;
-    try {
-      data = await call();
-    } on FormatException {
-      throw const ApiException('Server mengirim jawaban yang tidak dikenali. Coba lagi nanti.',
-          code: 'bad_response');
-    } on http.ClientException {
-      throw const ApiException('Tidak bisa terhubung ke server. Periksa koneksi internetmu.',
-          code: 'network');
+  Future<dynamic> _send(
+    String method,
+    String path, {
+    Map<String, dynamic>? body,
+  }) async {
+    final headers = <String, String>{'Accept': 'application/json'};
+    if (body != null) headers['Content-Type'] = 'application/json';
+    final activeToken = token;
+    if (activeToken != null && activeToken.isNotEmpty) {
+      headers['Authorization'] = 'Token $activeToken';
     }
-    if (data is Map && data['error'] is String) {
-      throw ApiException(
-        data['error'] as String,
-        code: data['code'] as String?,
-        fields: data['fields'] is Map ? Map<String, dynamic>.from(data['fields'] as Map) : null,
+    final request = http.Request(method, Uri.parse('$_baseUrl$path'))
+      ..headers.addAll(headers);
+    if (body != null) request.body = jsonEncode(body);
+
+    try {
+      final response = await http.Response.fromStream(
+        await _client.send(request),
+      );
+      dynamic data;
+      if (response.body.trim().isNotEmpty) {
+        try {
+          data = jsonDecode(utf8.decode(response.bodyBytes));
+        } on FormatException {
+          if (response.statusCode >= 200 && response.statusCode < 300) {
+            throw const ApiException(
+              'Server mengirim jawaban yang tidak dikenali. Coba lagi nanti.',
+              code: 'bad_response',
+            );
+          }
+          data = null;
+        }
+      }
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        final map = data is Map
+            ? Map<String, dynamic>.from(data)
+            : <String, dynamic>{};
+        throw ApiException(
+          map['error'] as String? ??
+              map['message'] as String? ??
+              'Permintaan gagal (${response.statusCode}). Coba lagi.',
+          code: map['code'] as String? ?? 'http_${response.statusCode}',
+          fields: map['fields'] is Map
+              ? Map<String, dynamic>.from(map['fields'] as Map)
+              : null,
+        );
+      }
+      return data ?? <String, dynamic>{};
+    } on http.ClientException {
+      throw const ApiException(
+        'Tidak bisa terhubung ke server. Periksa koneksi internetmu.',
+        code: 'network',
       );
     }
-    return data;
   }
+
+  void close() => _client.close();
 }

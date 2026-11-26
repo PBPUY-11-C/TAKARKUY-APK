@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:takarkuy_apk/core/router/app_navigation.dart';
 import 'package:takarkuy_apk/core/router/app_router.dart';
+import 'package:takarkuy_apk/features/akun/data/auth_state.dart';
 import 'package:takarkuy_apk/features/recipe_book/screens/recipe_list_page.dart';
 
 import 'package:takarkuy_apk/features/pantry/pantry_page.dart';
@@ -163,7 +165,9 @@ class DashboardHome extends StatelessWidget {
                           icon: Icons.calendar_month_outlined,
                           onTap: () => Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => const PlannerPage()),
+                            MaterialPageRoute(
+                              builder: (_) => const PlannerPage(),
+                            ),
                           ),
                         ),
                         ShortcutCard(
@@ -172,7 +176,9 @@ class DashboardHome extends StatelessWidget {
                           icon: Icons.kitchen_outlined,
                           onTap: () => Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => const PantryPage()),
+                            MaterialPageRoute(
+                              builder: (_) => const PantryPage(),
+                            ),
                           ),
                         ),
                         ShortcutCard(
@@ -365,6 +371,7 @@ class _BrandHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authenticated = context.watch<AuthState?>()?.isAuthenticated ?? false;
     return Row(
       children: [
         Container(
@@ -392,8 +399,11 @@ class _BrandHeader extends StatelessWidget {
         ),
         const Spacer(),
         IconButton(
-          tooltip: 'MasukKuy',
-          onPressed: () => openRoute(context, AppRoutes.login),
+          tooltip: authenticated ? 'Akun Saya' : 'MasukKuy',
+          onPressed: () => openRoute(
+            context,
+            authenticated ? AppRoutes.account : AppRoutes.login,
+          ),
           icon: const Icon(Icons.person_outline, color: darkGreen),
         ),
       ],

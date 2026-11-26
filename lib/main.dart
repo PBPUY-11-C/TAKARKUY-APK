@@ -1,35 +1,55 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
 import 'package:takarkuy_apk/core/api/api_client.dart';
 import 'package:takarkuy_apk/core/router/app_router.dart';
 import 'package:takarkuy_apk/core/theme/app_theme.dart';
+import 'package:takarkuy_apk/features/akun/data/auth_state.dart';
 
 void main() {
   runApp(const TakarKuyApp());
 }
 
-/// Akar aplikasi: sesi login (CookieRequest), ApiClient, tema, dan router dibuat sekali di sini
-/// untuk semua modul. `request` bisa diganti server palsu saat tes.
+/// Akar aplikasi: token auth, klien API, tema, dan router dibuat sekali untuk semua modul.
 class TakarKuyApp extends StatefulWidget {
-  const TakarKuyApp({super.key, this.request});
+  const TakarKuyApp({
+    super.key,
+    this.client,
+    this.initialToken,
+    this.initialUsername,
+  });
 
-  final CookieRequest? request;
+  final http.Client? client;
+  final String? initialToken;
+  final String? initialUsername;
 
   @override
   State<TakarKuyApp> createState() => _TakarKuyAppState();
 }
 
 class _TakarKuyAppState extends State<TakarKuyApp> {
-  // Router dan sesi disimpan di state agar tidak hilang saat widget dibangun ulang.
-  final GoRouter _router = createAppRouter();
-  late final CookieRequest _request = widget.request ?? CookieRequest();
+  // AuthState/router dibuat sekali agar token dan route guard tidak hilang saat rebuild.
+  late final ApiClient _api = ApiClient(client: widget.client);
+  late final AuthState _auth = AuthState(
+    _api,
+    token: widget.initialToken,
+    username: widget.initialUsername,
+  );
+  late final GoRouter _router = createAppRouter(_auth);
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialToken == null) _auth.restoreSession();
+  }
 
   @override
   void dispose() {
     _router.dispose();
+    _auth.dispose();
+    _api.close();
     super.dispose();
   }
 
@@ -37,8 +57,8 @@ class _TakarKuyAppState extends State<TakarKuyApp> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider<CookieRequest>.value(value: _request),
-        Provider<ApiClient>(create: (_) => ApiClient(_request)),
+        Provider<ApiClient>.value(value: _api),
+        ChangeNotifierProvider<AuthState>.value(value: _auth),
       ],
       child: MaterialApp.router(
         title: 'TAKARKUY',

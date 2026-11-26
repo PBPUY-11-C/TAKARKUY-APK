@@ -25,7 +25,7 @@ class MenuPage extends StatelessWidget {
     ModuleItem('Resep', 'Cari resep dan mulai masak', Icons.menu_book_outlined, AppRoutes.resep),
     ModuleItem('Dashboard', 'Ringkasan menu hari ini', Icons.space_dashboard_outlined,
         AppRoutes.dashboard),
-    ModuleItem('Akun', 'Masuk atau daftar akun', Icons.person_outline, AppRoutes.login),
+    ModuleItem('Akun', 'Masuk atau atur akun', Icons.person_outline, AppRoutes.account),
   ];
 
   @override
